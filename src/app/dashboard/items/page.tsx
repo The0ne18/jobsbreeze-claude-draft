@@ -1,22 +1,68 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PencilIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useItems } from '@/hooks';
-import { Item } from '@/types/item';
+import { ItemFormData } from '@/types/item';
+import Dialog from '@/components/ui/Dialog';
+import ItemForm from '@/components/features/items/ItemForm';
 
 export default function ItemsPage() {
-  const { items, isLoading, error, fetchItems } = useItems();
+  const { items, isLoading, error, fetchItems, addItem, updateItem, deleteItem } = useItems();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
 
-  const filteredItems = items.filter((item: Item) =>
+  const filteredItems = items.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleAddItem = async (data: ItemFormData) => {
+    setIsSubmitting(true);
+    try {
+      await addItem(data);
+      setIsAddingItem(false);
+    } catch (error) {
+      console.error('Failed to create item:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateItem = async (data: ItemFormData) => {
+    if (!editingItem?.id) return;
+    
+    setIsSubmitting(true);
+    try {
+      await updateItem(editingItem.id, data);
+      setEditingItem(null);
+    } catch (error) {
+      console.error('Failed to update item:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteItem = async () => {
+    if (!isDeleting) return;
+    
+    setIsSubmitting(true);
+    try {
+      await deleteItem(isDeleting);
+      setIsDeleting(null);
+    } catch (error) {
+      console.error('Failed to delete item:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -33,7 +79,7 @@ export default function ItemsPage() {
           />
         </div>
         <button
-          onClick={() => {}}
+          onClick={() => setIsAddingItem(true)}
           className="inline-flex items-center rounded-lg bg-[#00B86B] px-6 py-3 text-sm font-medium text-white hover:bg-[#00B86B]/90 focus:outline-none focus:ring-2 focus:ring-[#00B86B] focus:ring-offset-2 shadow-sm transition-colors"
         >
           <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -53,24 +99,42 @@ export default function ItemsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredItems.map((item: Item) => (
+          {filteredItems.map((item) => (
             <div key={item.id} className="flex items-center justify-between p-6 rounded-lg border border-[#E2E8F0] bg-white shadow-sm">
               <div>
                 <h3 className="text-lg font-medium text-[#0F172A]">{item.name}</h3>
-                <span className="inline-block px-2 py-1 mt-2 text-xs font-medium rounded-md bg-[#E0F2FE] text-[#0369A1]">
-                  {item.category}
-                </span>
+                <div className="flex items-center mt-2">
+                  <span className="inline-block px-2 py-1 text-xs font-medium rounded-md bg-[#E0F2FE] text-[#0369A1] capitalize">
+                    {item.category}
+                  </span>
+                  {item.taxable && (
+                    <span className="inline-block ml-2 px-2 py-1 text-xs font-medium rounded-md bg-[#DCFCE7] text-[#166534]">
+                      Taxable
+                    </span>
+                  )}
+                </div>
+                {item.description && (
+                  <p className="mt-2 text-sm text-[#64748B]">{item.description}</p>
+                )}
               </div>
               <div className="flex items-center">
                 <span className="mr-8 text-xl font-semibold text-[#0F172A]">
                   ${item.price.toFixed(2)}
                 </span>
-                <button
-                  className="p-2 text-[#64748B] hover:text-[#0F172A] transition-colors"
-                  onClick={() => {}}
-                >
-                  <PencilIcon className="h-5 w-5" />
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    className="p-2 text-[#64748B] hover:text-[#0F172A] transition-colors"
+                    onClick={() => setEditingItem(item)}
+                  >
+                    <PencilIcon className="h-5 w-5" />
+                  </button>
+                  <button
+                    className="p-2 text-[#64748B] hover:text-red-500 transition-colors"
+                    onClick={() => item.id && setIsDeleting(String(item.id))}
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -82,6 +146,69 @@ export default function ItemsPage() {
           )}
         </div>
       )}
+
+      {/* Add Item Dialog */}
+      <Dialog
+        isOpen={isAddingItem}
+        onClose={() => setIsAddingItem(false)}
+        title="Add New Item"
+      >
+        <ItemForm
+          onSubmit={handleAddItem}
+          onCancel={() => setIsAddingItem(false)}
+          isSubmitting={isSubmitting}
+        />
+      </Dialog>
+
+      {/* Edit Item Dialog */}
+      {editingItem && (
+        <Dialog
+          isOpen={!!editingItem}
+          onClose={() => setEditingItem(null)}
+          title="Edit Item"
+        >
+          <ItemForm
+            initialData={{
+              name: editingItem.name,
+              description: editingItem.description || '',
+              category: editingItem.category,
+              price: editingItem.price,
+              taxable: editingItem.taxable || false,
+            }}
+            onSubmit={handleUpdateItem}
+            onCancel={() => setEditingItem(null)}
+            isSubmitting={isSubmitting}
+          />
+        </Dialog>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        isOpen={!!isDeleting}
+        onClose={() => setIsDeleting(null)}
+        title="Delete Item"
+      >
+        <div className="space-y-4">
+          <p className="text-[#0F172A]">Are you sure you want to delete this item? This action cannot be undone.</p>
+          <div className="flex justify-end space-x-4 pt-4">
+            <button
+              type="button"
+              onClick={() => setIsDeleting(null)}
+              className="rounded-lg border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm font-medium text-[#0F172A] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#00B86B] focus:ring-offset-2 shadow-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteItem}
+              disabled={isSubmitting}
+              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-sm disabled:opacity-50"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 } 

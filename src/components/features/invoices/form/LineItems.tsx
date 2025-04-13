@@ -11,6 +11,7 @@ interface LineItemsProps {
 export function LineItems({ items, onChange }: LineItemsProps) {
   const addItem = () => {
     const newItem: LineItem = {
+      id: Date.now(), // Add unique id using timestamp
       description: '',
       quantity: 1,
       rate: 0,
@@ -29,7 +30,7 @@ export function LineItems({ items, onChange }: LineItemsProps) {
       item.amount = item.quantity * item.rate;
     } else if (field === 'description') {
       item.description = value as string;
-    } else if (field === 'id' && typeof value === 'string') {
+    } else if (field === 'id' && typeof value === 'number') {
       item.id = value;
     }
     

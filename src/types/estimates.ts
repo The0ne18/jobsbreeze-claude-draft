@@ -12,6 +12,7 @@ export interface LineItem {
   quantity: number;
   unitPrice: number;
   amount: number;
+  category: string;
 }
 
 export interface EstimateFormData {

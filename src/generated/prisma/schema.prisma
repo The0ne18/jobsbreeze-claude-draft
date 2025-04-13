@@ -14,13 +14,70 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Client {
+model User {
   id        Int      @id @default(autoincrement())
-  name      String
   email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
   phone     String?
   address   String?
   notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  estimates Estimate[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Estimate {
+  id         Int        @id @default(autoincrement())
+  estimateId String     @unique // Format: #XX-YYYYMMDD-NN
+  clientId   Int
+  client     Client     @relation(fields: [clientId], references: [id])
+  status     String     @default("PENDING") // PENDING, APPROVED, DECLINED
+  isDraft    Boolean    @default(true)
+  amount     Float
+  tax        Float      @default(0)
+  taxRate    Float      @default(0)
+  subtotal   Float
+  date       DateTime   @default(now())
+  expiryDate DateTime?
+  notes      String?
+  terms      String?
+  lineItems  LineItem[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model LineItem {
+  id          Int      @id @default(autoincrement())
+  estimateId  Int
+  estimate    Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float
+  unitPrice   Float
+  amount      Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([estimateId])
+}
+
+model Item {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  category    String
+  price       Float
+  taxable     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

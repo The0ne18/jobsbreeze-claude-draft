@@ -1,90 +1,139 @@
-import { useState, useCallback } from 'react';
-import { Estimate } from '@/types/estimate';
-import { getEstimates, createEstimate, updateEstimate, deleteEstimate } from '@/services/estimates';
+import { useCallback } from 'react';
+import { Estimate, LineItem } from '@/types/estimate';
+import { estimateService } from '@/services/estimateService';
+import { useQuery } from './useQuery';
+import { useMutation } from './useMutation';
+
+const ESTIMATES_QUERY_KEY = 'estimates';
 
 export function useEstimates() {
-  const [estimates, setEstimates] = useState<Estimate[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: estimates = [],
+    isLoading: isLoadingEstimates,
+    error: estimatesError,
+    refetch: refetchEstimates,
+  } = useQuery<Estimate[]>({
+    key: ESTIMATES_QUERY_KEY,
+    queryFn: () => estimateService.getEstimates(),
+  });
 
-  // Fetch all estimates
-  const fetchEstimates = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const data = await getEstimates();
-      setEstimates(data);
-    } catch (err) {
-      setError('Failed to fetch estimates');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { mutate: addEstimate, isLoading: isAddingEstimate } = useMutation<
+    Estimate,
+    Omit<Estimate, 'id' | 'createdAt'>
+  >({
+    mutationFn: (estimate: Omit<Estimate, 'id' | 'createdAt'>) => estimateService.createEstimate(estimate),
+    onSuccess: async () => {
+      await refetchEstimates();
+    },
+    invalidateQueries: [ESTIMATES_QUERY_KEY],
+  });
 
-  // Add a new estimate
-  const addEstimate = useCallback(async (data: Omit<Estimate, 'id'>) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const newEstimate = await createEstimate(data);
-      setEstimates(prev => [...prev, newEstimate]);
-      return newEstimate;
-    } catch (err) {
-      setError('Failed to add estimate');
-      console.error(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { mutate: updateEstimate, isLoading: isUpdatingEstimate } = useMutation<
+    Estimate,
+    { id: number; estimate: Partial<Estimate> }
+  >({
+    mutationFn: ({ id, estimate }: { id: number; estimate: Partial<Estimate> }) => 
+      estimateService.updateEstimate(id, estimate),
+    onSuccess: async () => {
+      await refetchEstimates();
+    },
+    invalidateQueries: [ESTIMATES_QUERY_KEY],
+  });
 
-  // Update an existing estimate
-  const updateEstimateData = useCallback(async (id: string, data: Partial<Estimate>) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const updatedEstimate = await updateEstimate(id, data);
-      setEstimates(prev => prev.map(estimate => 
-        estimate.id === id ? updatedEstimate : estimate
-      ));
-      return updatedEstimate;
-    } catch (err) {
-      setError('Failed to update estimate');
-      console.error(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { mutate: deleteEstimate, isLoading: isDeletingEstimate } = useMutation<
+    void,
+    number
+  >({
+    mutationFn: (id: number) => estimateService.deleteEstimate(id),
+    onSuccess: async () => {
+      await refetchEstimates();
+    },
+    invalidateQueries: [ESTIMATES_QUERY_KEY],
+  });
 
-  // Delete an estimate
-  const removeEstimate = useCallback(async (id: string) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      await deleteEstimate(id);
-      setEstimates(prev => prev.filter(estimate => estimate.id !== id));
-    } catch (err) {
-      setError('Failed to delete estimate');
-      console.error(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { mutate: addLineItem, isLoading: isAddingLineItem } = useMutation<
+    LineItem,
+    { estimateId: number; lineItem: Omit<LineItem, 'id'> }
+  >({
+    mutationFn: ({ estimateId, lineItem }: { estimateId: number; lineItem: Omit<LineItem, 'id'> }) =>
+      estimateService.addLineItem(estimateId, lineItem),
+    onSuccess: async () => {
+      await refetchEstimates();
+    },
+    invalidateQueries: [ESTIMATES_QUERY_KEY],
+  });
+
+  const { mutate: updateLineItem, isLoading: isUpdatingLineItem } = useMutation<
+    LineItem,
+    { estimateId: number; lineItemId: number; lineItem: Partial<LineItem> }
+  >({
+    mutationFn: ({ estimateId, lineItemId, lineItem }: { 
+      estimateId: number; 
+      lineItemId: number; 
+      lineItem: Partial<LineItem> 
+    }) => estimateService.updateLineItem(estimateId, lineItemId, lineItem),
+    onSuccess: async () => {
+      await refetchEstimates();
+    },
+    invalidateQueries: [ESTIMATES_QUERY_KEY],
+  });
+
+  const { mutate: deleteLineItem, isLoading: isDeletingLineItem } = useMutation<
+    void,
+    { estimateId: number; lineItemId: number }
+  >({
+    mutationFn: ({ estimateId, lineItemId }: { estimateId: number; lineItemId: number }) =>
+      estimateService.deleteLineItem(estimateId, lineItemId),
+    onSuccess: async () => {
+      await refetchEstimates();
+    },
+    invalidateQueries: [ESTIMATES_QUERY_KEY],
+  });
+
+  const handleUpdateEstimate = useCallback(
+    (id: number, estimate: Partial<Estimate>) => {
+      return updateEstimate({ id, estimate });
+    },
+    [updateEstimate]
+  );
+
+  const handleAddLineItem = useCallback(
+    (estimateId: number, lineItem: Omit<LineItem, 'id'>) => {
+      return addLineItem({ estimateId, lineItem });
+    },
+    [addLineItem]
+  );
+
+  const handleUpdateLineItem = useCallback(
+    (estimateId: number, lineItemId: number, lineItem: Partial<LineItem>) => {
+      return updateLineItem({ estimateId, lineItemId, lineItem });
+    },
+    [updateLineItem]
+  );
+
+  const handleDeleteLineItem = useCallback(
+    (estimateId: number, lineItemId: number) => {
+      return deleteLineItem({ estimateId, lineItemId });
+    },
+    [deleteLineItem]
+  );
 
   return {
     estimates,
-    isLoading,
-    error,
-    fetchEstimates,
+    isLoading:
+      isLoadingEstimates ||
+      isAddingEstimate ||
+      isUpdatingEstimate ||
+      isDeletingEstimate ||
+      isAddingLineItem ||
+      isUpdatingLineItem ||
+      isDeletingLineItem,
+    error: estimatesError,
     addEstimate,
-    updateEstimate: updateEstimateData,
-    deleteEstimate: removeEstimate
+    updateEstimate: handleUpdateEstimate,
+    deleteEstimate,
+    addLineItem: handleAddLineItem,
+    updateLineItem: handleUpdateLineItem,
+    deleteLineItem: handleDeleteLineItem,
   };
 } 

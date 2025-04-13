@@ -1,90 +1,139 @@
-import { useState, useCallback } from 'react';
-import { Invoice } from '@/types/invoice';
-import { getInvoices, createInvoice, updateInvoice, deleteInvoice } from '@/services/invoices';
+import { useCallback } from 'react';
+import { Invoice, LineItem } from '@/types/invoice';
+import { invoiceService } from '@/services/invoiceService';
+import { useQuery } from './useQuery';
+import { useMutation } from './useMutation';
+
+const INVOICES_QUERY_KEY = 'invoices';
 
 export function useInvoices() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: invoices = [],
+    isLoading: isLoadingInvoices,
+    error: invoicesError,
+    refetch: refetchInvoices,
+  } = useQuery<Invoice[]>({
+    key: INVOICES_QUERY_KEY,
+    queryFn: () => invoiceService.getInvoices(),
+  });
 
-  // Fetch all invoices
-  const fetchInvoices = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const data = await getInvoices();
-      setInvoices(data);
-    } catch (err) {
-      setError('Failed to fetch invoices');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { mutate: addInvoice, isLoading: isAddingInvoice } = useMutation<
+    Invoice,
+    Omit<Invoice, 'id' | 'createdAt'>
+  >({
+    mutationFn: (invoice: Omit<Invoice, 'id' | 'createdAt'>) => invoiceService.createInvoice(invoice),
+    onSuccess: async () => {
+      await refetchInvoices();
+    },
+    invalidateQueries: [INVOICES_QUERY_KEY],
+  });
 
-  // Add a new invoice
-  const addInvoice = useCallback(async (data: Omit<Invoice, 'id'>) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const newInvoice = await createInvoice(data);
-      setInvoices(prev => [...prev, newInvoice]);
-      return newInvoice;
-    } catch (err) {
-      setError('Failed to add invoice');
-      console.error(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { mutate: updateInvoice, isLoading: isUpdatingInvoice } = useMutation<
+    Invoice,
+    { id: number; invoice: Partial<Invoice> }
+  >({
+    mutationFn: ({ id, invoice }: { id: number; invoice: Partial<Invoice> }) => 
+      invoiceService.updateInvoice(id, invoice),
+    onSuccess: async () => {
+      await refetchInvoices();
+    },
+    invalidateQueries: [INVOICES_QUERY_KEY],
+  });
 
-  // Update an existing invoice
-  const updateInvoiceData = useCallback(async (id: string, data: Partial<Invoice>) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const updatedInvoice = await updateInvoice(id, data);
-      setInvoices(prev => prev.map(invoice => 
-        invoice.id === id ? updatedInvoice : invoice
-      ));
-      return updatedInvoice;
-    } catch (err) {
-      setError('Failed to update invoice');
-      console.error(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { mutate: deleteInvoice, isLoading: isDeletingInvoice } = useMutation<
+    void,
+    number
+  >({
+    mutationFn: (id: number) => invoiceService.deleteInvoice(id),
+    onSuccess: async () => {
+      await refetchInvoices();
+    },
+    invalidateQueries: [INVOICES_QUERY_KEY],
+  });
 
-  // Delete an invoice
-  const removeInvoice = useCallback(async (id: string) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      await deleteInvoice(id);
-      setInvoices(prev => prev.filter(invoice => invoice.id !== id));
-    } catch (err) {
-      setError('Failed to delete invoice');
-      console.error(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { mutate: addLineItem, isLoading: isAddingLineItem } = useMutation<
+    LineItem,
+    { invoiceId: number; lineItem: Omit<LineItem, 'id'> }
+  >({
+    mutationFn: ({ invoiceId, lineItem }: { invoiceId: number; lineItem: Omit<LineItem, 'id'> }) =>
+      invoiceService.addLineItem(invoiceId, lineItem),
+    onSuccess: async () => {
+      await refetchInvoices();
+    },
+    invalidateQueries: [INVOICES_QUERY_KEY],
+  });
+
+  const { mutate: updateLineItem, isLoading: isUpdatingLineItem } = useMutation<
+    LineItem,
+    { invoiceId: number; lineItemId: number; lineItem: Partial<LineItem> }
+  >({
+    mutationFn: ({ invoiceId, lineItemId, lineItem }: { 
+      invoiceId: number; 
+      lineItemId: number; 
+      lineItem: Partial<LineItem> 
+    }) => invoiceService.updateLineItem(invoiceId, lineItemId, lineItem),
+    onSuccess: async () => {
+      await refetchInvoices();
+    },
+    invalidateQueries: [INVOICES_QUERY_KEY],
+  });
+
+  const { mutate: deleteLineItem, isLoading: isDeletingLineItem } = useMutation<
+    void,
+    { invoiceId: number; lineItemId: number }
+  >({
+    mutationFn: ({ invoiceId, lineItemId }: { invoiceId: number; lineItemId: number }) =>
+      invoiceService.deleteLineItem(invoiceId, lineItemId),
+    onSuccess: async () => {
+      await refetchInvoices();
+    },
+    invalidateQueries: [INVOICES_QUERY_KEY],
+  });
+
+  const handleUpdateInvoice = useCallback(
+    (id: number, invoice: Partial<Invoice>) => {
+      return updateInvoice({ id, invoice });
+    },
+    [updateInvoice]
+  );
+
+  const handleAddLineItem = useCallback(
+    (invoiceId: number, lineItem: Omit<LineItem, 'id'>) => {
+      return addLineItem({ invoiceId, lineItem });
+    },
+    [addLineItem]
+  );
+
+  const handleUpdateLineItem = useCallback(
+    (invoiceId: number, lineItemId: number, lineItem: Partial<LineItem>) => {
+      return updateLineItem({ invoiceId, lineItemId, lineItem });
+    },
+    [updateLineItem]
+  );
+
+  const handleDeleteLineItem = useCallback(
+    (invoiceId: number, lineItemId: number) => {
+      return deleteLineItem({ invoiceId, lineItemId });
+    },
+    [deleteLineItem]
+  );
 
   return {
     invoices,
-    isLoading,
-    error,
-    fetchInvoices,
+    isLoading:
+      isLoadingInvoices ||
+      isAddingInvoice ||
+      isUpdatingInvoice ||
+      isDeletingInvoice ||
+      isAddingLineItem ||
+      isUpdatingLineItem ||
+      isDeletingLineItem,
+    error: invoicesError,
     addInvoice,
-    updateInvoice: updateInvoiceData,
-    deleteInvoice: removeInvoice
+    updateInvoice: handleUpdateInvoice,
+    deleteInvoice,
+    addLineItem: handleAddLineItem,
+    updateLineItem: handleUpdateLineItem,
+    deleteLineItem: handleDeleteLineItem,
   };
 } 

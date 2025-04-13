@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { Client } from './client';
+import { SimpleClient } from './client';
 
 // Type for line items
 export interface LineItem {
-  id?: string;
+  id: number;
   description: string;
   quantity: number;
   rate: number;
@@ -13,20 +13,31 @@ export interface LineItem {
 // Invoice status types
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
 
+// Zod schema for invoice validation
+export const invoiceSchema = z.object({
+  number: z.string().min(1, 'Invoice number is required'),
+  clientId: z.number(),
+  status: z.enum(['draft', 'sent', 'paid', 'overdue']),
+  total: z.number().min(0),
+  dueDate: z.date(),
+  lineItems: z.array(z.object({
+    id: z.number(),
+    description: z.string().min(1, 'Description is required'),
+    quantity: z.number().min(0),
+    rate: z.number().min(0),
+    amount: z.number().min(0),
+  })),
+});
+
+// Type for invoice form data
+export type InvoiceFormData = z.infer<typeof invoiceSchema>;
+
 // Interface for invoice data
-export interface Invoice {
-  id: string;
-  number: string;
-  clientId: string;
-  client: {
-    name: string;
-    email: string;
-  };
-  status: InvoiceStatus;
-  total: number;
-  dueDate: Date;
+export interface Invoice extends Omit<InvoiceFormData, 'clientId'> {
+  id: number;
+  clientId: number;
+  client: SimpleClient;
   createdAt: Date;
-  lineItems: LineItem[];
 }
 
 // Type for grouped invoices by month

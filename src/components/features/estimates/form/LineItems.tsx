@@ -1,139 +1,142 @@
 'use client';
 
-import { TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { LineItem } from '@/types/estimates';
+import { Control, UseFormRegister, useFieldArray, FieldErrors } from 'react-hook-form';
+import { EstimateFormData } from '@/types/estimate';
+import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface LineItemsProps {
-  items: LineItem[];
-  onChange: (items: LineItem[]) => void;
-  error?: string;
+  control: Control<EstimateFormData>;
+  register: UseFormRegister<EstimateFormData>;
+  errors: FieldErrors<EstimateFormData>;
 }
 
-export default function LineItems({ items, onChange, error }: LineItemsProps) {
-  const addItem = () => {
-    onChange([
-      ...items,
-      {
-        description: '',
-        quantity: 1,
-        unitPrice: 0,
-        amount: 0,
-      },
-    ]);
-  };
-
-  const removeItem = (index: number) => {
-    onChange(items.filter((_, i) => i !== index));
-  };
-
-  const updateItem = (index: number, field: keyof LineItem, value: string | number) => {
-    const newItems = [...items];
-    const item = { ...newItems[index], [field]: value };
-    
-    // Recalculate amount when quantity or unit price changes
-    if (field === 'quantity' || field === 'unitPrice') {
-      item.amount = Number(item.quantity) * Number(item.unitPrice);
-    }
-    
-    newItems[index] = item;
-    onChange(newItems);
-  };
+export default function LineItems({ control, register, errors }: LineItemsProps) {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'lineItems',
+  });
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">Line Items</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium text-[#0F172A]">Line Items</h3>
         <button
           type="button"
-          onClick={addItem}
-          className="inline-flex items-center gap-x-1.5 rounded-md bg-green-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+          onClick={() => append({ description: '', quantity: 1, unitPrice: 0, amount: 0, category: 'labor' })}
+          className="rounded-lg bg-[#00B86B] px-4 py-2 text-sm font-medium text-white hover:bg-[#00A65F] focus:outline-none focus:ring-2 focus:ring-[#00B86B] focus:ring-offset-2"
         >
-          <PlusIcon className="-ml-0.5 h-5 w-5" aria-hidden="true" />
           Add Item
         </button>
       </div>
 
-      {items.length === 0 ? (
-        <p className="text-sm text-gray-500">No items added yet.</p>
-      ) : (
-        <div className="overflow-hidden ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-          <table className="min-w-full divide-y divide-gray-300">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                  Description
-                </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Quantity
-                </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Unit Price
-                </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Amount
-                </th>
-                <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {items.map((item, index) => (
-                <tr key={index}>
-                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-[#E2E8F0]">
+          <thead>
+            <tr className="text-left text-sm font-medium text-[#64748B]">
+              <th className="py-3.5 pl-4 pr-3">Description</th>
+              <th className="px-3 py-3.5">Category</th>
+              <th className="px-3 py-3.5">Quantity</th>
+              <th className="px-3 py-3.5">Unit Price</th>
+              <th className="px-3 py-3.5">Amount</th>
+              <th className="py-3.5 pl-3 pr-4">
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#E2E8F0]">
+            {fields.map((field, index) => {
+              const quantity = parseFloat(String(field.quantity)) || 0;
+              const unitPrice = parseFloat(String(field.unitPrice)) || 0;
+              const amount = quantity * unitPrice;
+
+              return (
+                <tr key={field.id}>
+                  <td className="py-4 pl-4 pr-3">
                     <input
                       type="text"
-                      value={item.description}
-                      onChange={(e) => updateItem(index, 'description', e.target.value)}
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
+                      {...register(`lineItems.${index}.description`)}
+                      className={`block w-full rounded-lg border-[#E2E8F0] bg-white shadow-sm focus:border-[#00B86B] focus:ring-[#00B86B] ${
+                        errors.lineItems?.[index]?.description ? 'border-red-500' : ''
+                      }`}
                       placeholder="Item description"
                     />
+                    {errors.lineItems?.[index]?.description && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.lineItems[index].description.message}
+                      </p>
+                    )}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                  <td className="px-3 py-4">
+                    <select
+                      {...register(`lineItems.${index}.category`)}
+                      className={`block w-full rounded-lg border-[#E2E8F0] bg-white shadow-sm focus:border-[#00B86B] focus:ring-[#00B86B] ${
+                        errors.lineItems?.[index]?.category ? 'border-red-500' : ''
+                      }`}
+                    >
+                      <option value="labor">Labor</option>
+                      <option value="material">Material</option>
+                      <option value="equipment">Equipment</option>
+                      <option value="other">Other</option>
+                    </select>
+                    {errors.lineItems?.[index]?.category && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.lineItems[index].category.message}
+                      </p>
+                    )}
+                  </td>
+                  <td className="px-3 py-4">
                     <input
                       type="number"
+                      {...register(`lineItems.${index}.quantity`, { valueAsNumber: true })}
+                      className={`block w-full rounded-lg border-[#E2E8F0] bg-white shadow-sm focus:border-[#00B86B] focus:ring-[#00B86B] ${
+                        errors.lineItems?.[index]?.quantity ? 'border-red-500' : ''
+                      }`}
                       min="0"
                       step="1"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                      className="block w-24 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
                     />
+                    {errors.lineItems?.[index]?.quantity && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.lineItems[index].quantity.message}
+                      </p>
+                    )}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <span className="text-gray-500 sm:text-sm">$</span>
-                      </div>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.unitPrice}
-                        onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                        className="block w-32 rounded-md border-0 py-1.5 pl-7 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
-                      />
-                    </div>
+                  <td className="px-3 py-4">
+                    <input
+                      type="number"
+                      {...register(`lineItems.${index}.unitPrice`, { valueAsNumber: true })}
+                      className={`block w-full rounded-lg border-[#E2E8F0] bg-white shadow-sm focus:border-[#00B86B] focus:ring-[#00B86B] ${
+                        errors.lineItems?.[index]?.unitPrice ? 'border-red-500' : ''
+                      }`}
+                      min="0"
+                      step="0.01"
+                    />
+                    {errors.lineItems?.[index]?.unitPrice && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.lineItems[index].unitPrice.message}
+                      </p>
+                    )}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                    ${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  <td className="px-3 py-4">
+                    <span className="text-[#0F172A] font-medium">
+                      ${amount.toFixed(2)}
+                    </span>
                   </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                  <td className="py-4 pl-3 pr-4">
                     <button
                       type="button"
-                      onClick={() => removeItem(index)}
-                      className="text-red-600 hover:text-red-900"
+                      onClick={() => remove(index)}
+                      className="rounded-lg p-2 text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#0F172A] focus:outline-none"
                     >
-                      <TrashIcon className="h-5 w-5" aria-hidden="true" />
+                      <TrashIcon className="h-5 w-5" />
                       <span className="sr-only">Remove item</span>
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 } 

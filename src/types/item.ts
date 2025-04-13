@@ -2,15 +2,16 @@ import { z } from 'zod';
 
 // Zod schema for item validation
 export const itemSchema = z.object({
-  name: z.string().min(2, 'Name is required'),
-  category: z.string().min(2, 'Category is required'),
-  price: z.number().min(0, 'Price must be a positive number'),
+  id: z.number().optional(),
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+  category: z.enum(['materials', 'labor', 'equipment', 'other']),
+  price: z.number().min(0, 'Price must be greater than or equal to 0'),
+  taxable: z.boolean().optional().default(false),
 });
 
 // Type for item form data
-export type ItemFormData = z.infer<typeof itemSchema>;
+export type ItemFormData = Omit<Item, 'id'>;
 
 // Type for item data with ID
-export interface Item extends ItemFormData {
-  id: string;
-} 
+export type Item = z.infer<typeof itemSchema>; 

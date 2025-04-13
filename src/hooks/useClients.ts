@@ -1,90 +1,65 @@
-import { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api/client';
 import { Client, ClientFormData } from '@/types/client';
-import { getClients, createClient, updateClient, deleteClient } from '@/services/clients';
+import { ApiError } from '@/types/api';
+
+const CLIENTS_QUERY_KEY = ['clients'] as const;
 
 export function useClients() {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // Fetch all clients
-  const fetchClients = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const data = await getClients();
-      setClients(data);
-    } catch (err) {
-      setError('Failed to fetch clients');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const {
+    data: clients = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: CLIENTS_QUERY_KEY,
+    queryFn: async () => {
+      const response = await apiClient.get<Client[]>('/clients');
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 
-  // Add a new client
-  const addClient = useCallback(async (data: ClientFormData) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const newClient = await createClient(data);
-      setClients(prev => [...prev, newClient]);
-      return newClient;
-    } catch (err) {
-      setError('Failed to add client');
-      console.error(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const addClientMutation = useMutation({
+    mutationFn: async (data: ClientFormData) => {
+      const response = await apiClient.post<Client>('/clients', data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CLIENTS_QUERY_KEY });
+    },
+  });
 
-  // Update an existing client
-  const updateClientData = useCallback(async (id: number | string, data: ClientFormData) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const updatedClient = await updateClient(id, data);
-      setClients(prev => prev.map(client => 
-        client.id === id ? updatedClient : client
-      ));
-      return updatedClient;
-    } catch (err) {
-      setError('Failed to update client');
-      console.error(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const updateClientMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: ClientFormData }) => {
+      const response = await apiClient.put<Client>(`/clients/${id}`, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CLIENTS_QUERY_KEY });
+    },
+  });
 
-  // Delete a client
-  const removeClient = useCallback(async (id: number | string) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      await deleteClient(id);
-      setClients(prev => prev.filter(client => client.id !== id));
-    } catch (err) {
-      setError('Failed to delete client');
-      console.error(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const deleteClientMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiClient.delete(`/clients/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CLIENTS_QUERY_KEY });
+    },
+  });
 
   return {
     clients,
     isLoading,
     error,
-    fetchClients,
-    addClient,
-    updateClient: updateClientData,
-    deleteClient: removeClient
+    addClient: addClientMutation.mutateAsync,
+    updateClient: updateClientMutation.mutateAsync,
+    deleteClient: deleteClientMutation.mutateAsync,
+    isAdding: addClientMutation.isPending,
+    isUpdating: updateClientMutation.isPending,
+    isDeleting: deleteClientMutation.isPending,
   };
 } 

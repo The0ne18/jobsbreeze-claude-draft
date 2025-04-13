@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Zod schema for client validation
+// Base client schema for validation
 export const clientSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   email: z.string().email('Invalid email address'),
@@ -12,9 +12,18 @@ export const clientSchema = z.object({
 // Type for client form data
 export type ClientFormData = z.infer<typeof clientSchema>;
 
-// Type for client data with ID
+// Base client interface with all possible fields
 export interface Client extends ClientFormData {
-  id: number | string;
+  id: number;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+// Simplified client interface for use in invoices and estimates
+export interface SimpleClient {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
 } 
