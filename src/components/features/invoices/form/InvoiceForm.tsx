@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import ClientSelect from '@/components/features/estimates/form/ClientSelect';
 import { LineItems } from './LineItems';
 import { Invoice, LineItem, InvoiceStatus } from '@/types/invoice';
+import { Client } from '@/types/estimates';
 import { useInvoices } from '@/hooks/useInvoices';
 
 interface InvoiceFormProps {
@@ -16,6 +17,21 @@ interface InvoiceFormProps {
 export function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
   const { addInvoice, updateInvoice, isLoading } = useInvoices();
   const [error, setError] = useState('');
+  
+  // Initialize the selected client with only the properties that ClientSelect expects
+  const [selectedClient, setSelectedClient] = useState<Client | null>(
+    invoice?.client && invoice.client.name && invoice.client.email
+      ? {
+          id: Number(invoice.clientId) || 0,
+          name: invoice.client.name,
+          email: invoice.client.email,
+          // Add empty values for the other required Client properties
+          phone: '',
+          address: ''
+        }
+      : null
+  );
+  
   const [formData, setFormData] = useState<{
     number: string;
     clientId: string;
@@ -24,36 +40,52 @@ export function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
     dueDate: Date;
     lineItems: LineItem[];
   }>(
-    invoice ? {
-      number: invoice.number,
-      clientId: invoice.clientId,
-      status: invoice.status,
-      total: invoice.total,
-      dueDate: invoice.dueDate,
-      lineItems: invoice.lineItems,
-    } : {
-      number: '',
-      clientId: '',
-      status: 'draft',
-      total: 0,
-      dueDate: new Date(),
-      lineItems: [],
-    }
+    invoice
+      ? {
+          number: invoice.number,
+          clientId: invoice.clientId,
+          status: invoice.status,
+          total: invoice.total,
+          dueDate: invoice.dueDate,
+          lineItems: invoice.lineItems,
+        }
+      : {
+          number: '',
+          clientId: '',
+          status: 'draft',
+          total: 0,
+          dueDate: new Date(),
+          lineItems: [],
+        }
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
+    if (!selectedClient) {
+      setError('Please select a client');
+      return;
+    }
+
     try {
       if (invoice?.id) {
-        await updateInvoice(invoice.id, formData);
+        await updateInvoice(invoice.id, {
+          ...formData,
+          client: {
+            name: selectedClient.name,
+            email: selectedClient.email
+          }
+        });
       } else {
         await addInvoice({
           ...formData,
-          client: { name: '', email: '' }, // This will be updated by the server
+          client: {
+            name: selectedClient.name,
+            email: selectedClient.email
+          },
           createdAt: new Date(),
-        } as unknown as Omit<Invoice, 'id'>);
+        } as Omit<Invoice, 'id'>);
       }
       onSuccess();
     } catch (err) {
@@ -64,6 +96,11 @@ export function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
   const updateLineItems = (lineItems: LineItem[]) => {
     const total = lineItems.reduce((sum, item) => sum + item.amount, 0);
     setFormData({ ...formData, lineItems, total });
+  };
+
+  const handleClientSelect = (client: Client) => {
+    setSelectedClient(client);
+    setFormData({ ...formData, clientId: client.id.toString() });
   };
 
   return (
@@ -89,8 +126,9 @@ export function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
           </label>
           <div className="mt-2">
             <ClientSelect
-              value={formData.clientId}
-              onChange={(clientId: string) => setFormData({ ...formData, clientId })}
+              selectedClient={selectedClient}
+              onSelect={handleClientSelect}
+              error={error && !selectedClient ? 'Please select a client' : undefined}
             />
           </div>
         </div>
