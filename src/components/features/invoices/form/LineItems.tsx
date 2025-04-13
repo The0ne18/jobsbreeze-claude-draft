@@ -1,15 +1,7 @@
-import { useState } from 'react';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-
-interface LineItem {
-  id?: string;
-  description: string;
-  quantity: number;
-  rate: number;
-  amount: number;
-}
+import { LineItem } from '@/types/invoice';
 
 interface LineItemsProps {
   items: LineItem[];
@@ -33,10 +25,12 @@ export function LineItems({ items, onChange }: LineItemsProps) {
     
     if (field === 'quantity' || field === 'rate') {
       const numValue = parseFloat(value as string) || 0;
-      item[field] = numValue;
+      (item as any)[field] = numValue;
       item.amount = item.quantity * item.rate;
-    } else {
-      item[field] = value;
+    } else if (field === 'description') {
+      item.description = value as string;
+    } else if (field === 'id' && typeof value === 'string') {
+      item.id = value;
     }
     
     updatedItems[index] = item;
@@ -50,52 +44,75 @@ export function LineItems({ items, onChange }: LineItemsProps) {
 
   return (
     <div className="space-y-4">
-      {items.map((item, index) => (
-        <div key={index} className="flex gap-4 items-start">
-          <div className="flex-1">
-            <Input
-              type="text"
-              value={item.description}
-              onChange={(e) => updateItem(index, 'description', e.target.value)}
-              placeholder="Description"
-              className="w-full"
-            />
+      <div className="table-responsive">
+        {items.length === 0 ? (
+          <div className="py-8 text-center text-[#64748B] bg-gray-50 rounded-lg border border-[#E2E8F0]">
+            No items added. Click "Add Line Item" to get started.
           </div>
-          <div className="w-24">
-            <Input
-              type="number"
-              value={item.quantity}
-              onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-              placeholder="Quantity"
-              min="1"
-              className="w-full"
-            />
-          </div>
-          <div className="w-32">
-            <Input
-              type="number"
-              value={item.rate}
-              onChange={(e) => updateItem(index, 'rate', e.target.value)}
-              placeholder="Rate"
-              min="0"
-              step="0.01"
-              className="w-full"
-            />
-          </div>
-          <div className="w-32">
-            <div className="h-10 flex items-center px-3 bg-gray-50 border border-[#E2E8F0] rounded-lg text-[#0F172A]">
-              ${item.amount.toFixed(2)}
-            </div>
-          </div>
-          <Button
-            type="button"
-            onClick={() => removeItem(index)}
-            className="p-2 text-[#64748B] hover:text-[#0F172A]"
-          >
-            <TrashIcon className="w-5 h-5" />
-          </Button>
-        </div>
-      ))}
+        ) : (
+          <table className="min-w-full divide-y divide-[#E2E8F0]">
+            <thead>
+              <tr className="text-xs text-[#64748B] uppercase">
+                <th className="px-3 py-3 text-left">Description</th>
+                <th className="px-3 py-3 text-right w-20">Qty</th>
+                <th className="px-3 py-3 text-right w-24">Rate</th>
+                <th className="px-3 py-3 text-right w-24">Amount</th>
+                <th className="px-3 py-3 w-12"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E2E8F0]">
+              {items.map((item, index) => (
+                <tr key={index}>
+                  <td className="px-3 py-2">
+                    <Input
+                      type="text"
+                      value={item.description}
+                      onChange={(e) => updateItem(index, 'description', e.target.value)}
+                      placeholder="Description"
+                      className="w-full"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <Input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                      placeholder="Qty"
+                      min="1"
+                      className="w-full text-right"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <Input
+                      type="number"
+                      value={item.rate}
+                      onChange={(e) => updateItem(index, 'rate', e.target.value)}
+                      placeholder="Rate"
+                      min="0"
+                      step="0.01"
+                      className="w-full text-right"
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <div className="h-10 flex items-center justify-end px-3 bg-gray-50 border border-[#E2E8F0] rounded-lg text-[#0F172A]">
+                      ${item.amount.toFixed(2)}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <Button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      className="p-2 text-[#64748B] hover:text-[#0F172A]"
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
       
       <div>
         <Button

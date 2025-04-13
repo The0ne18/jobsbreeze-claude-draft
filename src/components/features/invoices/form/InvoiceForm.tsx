@@ -1,24 +1,12 @@
+'use client';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ClientSelect } from '@/components/features/estimates/form/ClientSelect';
+import ClientSelect from '@/components/features/estimates/form/ClientSelect';
 import { LineItems } from './LineItems';
-
-interface Invoice {
-  id?: string;
-  number: string;
-  clientId: string;
-  status: 'draft' | 'sent' | 'paid' | 'overdue';
-  total: number;
-  dueDate: Date;
-  lineItems: Array<{
-    id?: string;
-    description: string;
-    quantity: number;
-    rate: number;
-    amount: number;
-  }>;
-}
+import { Invoice, LineItem, InvoiceStatus } from '@/types/invoice';
+import { useInvoices } from '@/hooks/useInvoices';
 
 interface InvoiceFormProps {
   invoice?: Invoice;
@@ -26,10 +14,24 @@ interface InvoiceFormProps {
 }
 
 export function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
+  const { addInvoice, updateInvoice, isLoading } = useInvoices();
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<Invoice>(
-    invoice || {
+  const [formData, setFormData] = useState<{
+    number: string;
+    clientId: string;
+    status: InvoiceStatus;
+    total: number;
+    dueDate: Date;
+    lineItems: LineItem[];
+  }>(
+    invoice ? {
+      number: invoice.number,
+      clientId: invoice.clientId,
+      status: invoice.status,
+      total: invoice.total,
+      dueDate: invoice.dueDate,
+      lineItems: invoice.lineItems,
+    } : {
       number: '',
       clientId: '',
       status: 'draft',
@@ -42,19 +44,24 @@ export function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsSubmitting(true);
 
     try {
-      // Add API call here to save invoice
+      if (invoice?.id) {
+        await updateInvoice(invoice.id, formData);
+      } else {
+        await addInvoice({
+          ...formData,
+          client: { name: '', email: '' }, // This will be updated by the server
+          createdAt: new Date(),
+        } as unknown as Omit<Invoice, 'id'>);
+      }
       onSuccess();
     } catch (err) {
       setError('Failed to save invoice. Please try again.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const updateLineItems = (lineItems: Invoice['lineItems']) => {
+  const updateLineItems = (lineItems: LineItem[]) => {
     const total = lineItems.reduce((sum, item) => sum + item.amount, 0);
     setFormData({ ...formData, lineItems, total });
   };
@@ -83,7 +90,7 @@ export function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
           <div className="mt-2">
             <ClientSelect
               value={formData.clientId}
-              onChange={(clientId) => setFormData({ ...formData, clientId })}
+              onChange={(clientId: string) => setFormData({ ...formData, clientId })}
             />
           </div>
         </div>
@@ -95,7 +102,7 @@ export function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
           <Input
             id="dueDate"
             type="date"
-            value={formData.dueDate.toISOString().split('T')[0]}
+            value={formData.dueDate instanceof Date ? formData.dueDate.toISOString().split('T')[0] : ''}
             onChange={(e) => setFormData({ ...formData, dueDate: new Date(e.target.value) })}
             className="mt-2"
             required
@@ -133,10 +140,10 @@ export function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
       <div className="flex justify-end space-x-4">
         <Button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isLoading}
           className="bg-[#00B86B] text-white px-6 py-2 rounded-lg hover:bg-[#00A05D] focus:outline-none focus:ring-2 focus:ring-[#00B86B] focus:ring-offset-2 disabled:opacity-50"
         >
-          {isSubmitting ? 'Saving...' : invoice ? 'Update Invoice' : 'Create Invoice'}
+          {isLoading ? 'Saving...' : invoice ? 'Update Invoice' : 'Create Invoice'}
         </Button>
       </div>
     </form>
