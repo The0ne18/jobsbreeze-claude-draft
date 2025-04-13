@@ -24,3 +24,45 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Welcome message animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Responsive improvements */
+/* Make tables horizontally scrollable on small screens */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Improve tap target sizes on mobile */
+@media (max-width: 640px) {
+  button, a {
+    min-height: 40px;
+  }
+  
+  /* Fix for mobile browsers and safe areas */
+  .safe-padding-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
+}
+
+/* Fix for iOS overscroll behavior */
+html, body {
+  overflow-x: hidden;
+  position: relative;
+  width: 100%;
+}
