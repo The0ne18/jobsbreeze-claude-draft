@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
-import NextAuthProvider from "@/components/providers/NextAuthProvider";
 import QueryProvider from "@/components/providers/QueryProvider";
 import ToastProvider from "@/components/providers/ToastProvider";
+import { SupabaseAuthProvider } from "@/components/providers/SupabaseAuthProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,13 +22,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <QueryProvider>
-          <NextAuthProvider>
+          <SupabaseAuthProvider>
             <AuthProvider>
               <ToastProvider>
                 {children}
               </ToastProvider>
             </AuthProvider>
-          </NextAuthProvider>
+          </SupabaseAuthProvider>
         </QueryProvider>
       </body>
     </html>

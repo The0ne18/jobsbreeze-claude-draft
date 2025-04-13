@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { XCircleIcon } from '@heroicons/react/24/solid';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignUpForm() {
   const [email, setEmail] = useState('');
@@ -12,6 +12,7 @@ export default function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
+  const { register } = useAuth();
 
   // Set isMounted to true after client-side hydration
   useEffect(() => {
@@ -24,54 +25,11 @@ export default function SignUpForm() {
     setIsLoading(true);
 
     try {
-      // First, try to register the user
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      // Debug: Log the raw response
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('JSON Parse Error:', parseError);
-        setError('Invalid server response. Please try again.');
-        setIsLoading(false);
-        return;
-      }
-
-      if (!response.ok) {
-        setError(data.message || 'An error occurred during registration');
-        setIsLoading(false);
-        return;
-      }
-
-      // After successful registration, attempt to sign in
-      const signInResult = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-        callbackUrl: '/dashboard',
-      });
-
-      if (signInResult?.error) {
-        console.error('Sign in error:', signInResult.error);
-        setError('Failed to sign in after registration. Please try logging in.');
-        router.push('/?login=true');
-      } else {
-        router.push('/dashboard');
-        router.refresh();
-      }
-    } catch (error) {
-      console.error('Registration/Sign in error:', error);
-      setError('An error occurred. Please try again.');
+      await register(email, password);
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setError(error.message || 'An error occurred during registration');
     } finally {
       setIsLoading(false);
     }

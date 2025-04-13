@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { XCircleIcon } from '@heroicons/react/24/solid';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -12,6 +12,7 @@ export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   // Set isMounted to true after client-side hydration
   useEffect(() => {
@@ -24,20 +25,10 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError('Invalid email or password');
-        return;
-      }
-
+      await login(email, password);
       router.push('/dashboard');
-    } catch (error) {
-      setError('An error occurred. Please try again.');
+    } catch (error: any) {
+      setError(error.message || 'Invalid email or password');
     } finally {
       setIsLoading(false);
     }

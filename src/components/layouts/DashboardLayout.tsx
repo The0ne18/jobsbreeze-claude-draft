@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import WelcomeToast from '@/components/common/WelcomeToast';
 import { Bars3Icon } from '@heroicons/react/24/outline';
+import { useAuth } from '@/contexts/AuthContext';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function DashboardLayout({
   children,
@@ -13,15 +14,25 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      redirect('/');
-    },
-  });
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
 
-  if (status === 'loading') {
-    return <div>Loading...</div>;
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/auth/login');
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect in the useEffect
   }
 
   return (
@@ -41,7 +52,7 @@ export default function DashboardLayout({
 
       {/* Sidebar for desktop and mobile */}
       <Sidebar 
-        userEmail={session?.user?.email || ''} 
+        userEmail={user?.email || ''} 
         mobileOpen={sidebarOpen} 
         setMobileOpen={setSidebarOpen}
       />
