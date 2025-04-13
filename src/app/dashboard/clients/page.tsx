@@ -1,56 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, PencilIcon, TrashIcon, DocumentIcon } from '@heroicons/react/24/outline';
-import DashboardLayout from '@/components/layouts/DashboardLayout';
-import ClientForm from '@/components/forms/ClientForm';
+import { ClientForm } from '@/components/features/clients';
 import Dialog from '@/components/ui/Dialog';
-
-// Temporary mock data
-const initialClients = [
-  { id: 1, name: 'john ty', email: 'ljk@fasd.com', phone: '', address: '', notes: '' },
-  { id: 2, name: 'John Smith', email: 'smith@gmail.com', phone: '', address: '', notes: '' },
-  { id: 3, name: 'Test Client', email: 'cleint@gmail.com', phone: '4561235478', address: '', notes: '' },
-];
-
-type Client = {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  notes: string;
-};
+import { Client, ClientFormData } from '@/types/client';
+import { useClients } from '@/hooks/useClients';
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const { clients, isLoading, error, fetchClients, addClient, updateClient, deleteClient } = useClients();
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [isDeletingClient, setIsDeletingClient] = useState<Client | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleAddClient = async (data: Omit<Client, 'id'>) => {
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
+
+  const handleAddClient = async (data: ClientFormData) => {
     try {
-      // TODO: Implement API call to save client
-      const newClient = {
-        ...data,
-        id: clients.length + 1,
-      };
-      setClients([...clients, newClient]);
+      await addClient(data);
       setIsAddingClient(false);
     } catch (error) {
       console.error('Error adding client:', error);
     }
   };
 
-  const handleEditClient = async (data: Omit<Client, 'id'>) => {
+  const handleEditClient = async (data: ClientFormData) => {
     if (!editingClient) return;
     try {
-      // TODO: Implement API call to update client
-      const updatedClients = clients.map(client =>
-        client.id === editingClient.id ? { ...data, id: client.id } : client
-      );
-      setClients(updatedClients);
+      await updateClient(editingClient.id, data);
       setEditingClient(null);
     } catch (error) {
       console.error('Error updating client:', error);
@@ -60,9 +40,7 @@ export default function ClientsPage() {
   const handleDeleteClient = async () => {
     if (!isDeletingClient) return;
     try {
-      // TODO: Implement API call to delete client
-      const updatedClients = clients.filter(client => client.id !== isDeletingClient.id);
-      setClients(updatedClients);
+      await deleteClient(isDeletingClient.id);
       setIsDeletingClient(null);
     } catch (error) {
       console.error('Error deleting client:', error);
@@ -72,76 +50,96 @@ export default function ClientsPage() {
   const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.phone.toLowerCase().includes(searchQuery.toLowerCase())
+    (client.phone ? client.phone.toLowerCase().includes(searchQuery.toLowerCase()) : false)
   );
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Clients</h1>
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-[32px] font-semibold text-[#0F172A]">Clients</h1>
+      </div>
 
-        <div className="flex items-center justify-between gap-4">
-          <div className="relative flex-1">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500"
-              placeholder="Search clients..."
-            />
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-2xl">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+            <MagnifyingGlassIcon className="h-5 w-5 text-[#94A3B8]" aria-hidden="true" />
           </div>
-          <button
-            onClick={() => setIsAddingClient(true)}
-            className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-          >
-            Add Client
-          </button>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full rounded-lg border border-[#E2E8F0] bg-white py-3 pl-11 pr-4 text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-1 focus:ring-[#00B86B] focus:border-[#00B86B] shadow-sm"
+            placeholder="Search clients..."
+          />
         </div>
+        <button
+          onClick={() => setIsAddingClient(true)}
+          className="inline-flex items-center rounded-lg bg-[#00B86B] px-6 py-3 text-sm font-medium text-white hover:bg-[#00B86B]/90 focus:outline-none focus:ring-2 focus:ring-[#00B86B] focus:ring-offset-2 shadow-sm transition-colors"
+        >
+          Add Client
+        </button>
+      </div>
 
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <p className="text-[#64748B]">Loading clients...</p>
+        </div>
+      ) : error ? (
+        <div className="flex justify-center py-8">
+          <p className="text-red-500">{error}</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-sm">
+          <table className="min-w-full divide-y divide-[#E2E8F0]">
+            <thead className="bg-[#F8FAFC]">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-sm font-medium text-gray-500">Name</th>
-                <th scope="col" className="px-6 py-3 text-left text-sm font-medium text-gray-500">Email</th>
-                <th scope="col" className="px-6 py-3 text-left text-sm font-medium text-gray-500">Phone</th>
-                <th scope="col" className="px-6 py-3 text-left text-sm font-medium text-gray-500">Address</th>
-                <th scope="col" className="px-6 py-3 text-right text-sm font-medium text-gray-500">Actions</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-[#64748B] uppercase tracking-wider">Name</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-[#64748B] uppercase tracking-wider">Email</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-[#64748B] uppercase tracking-wider">Phone</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-[#64748B] uppercase tracking-wider">Address</th>
+                <th scope="col" className="px-6 py-4 text-right text-xs font-medium text-[#64748B] uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {filteredClients.map((client) => (
-                <tr key={client.id}>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{client.name}</td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{client.email}</td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{client.phone}</td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{client.address}</td>
-                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                    <button 
-                      onClick={() => setEditingClient(client)}
-                      className="text-gray-400 hover:text-gray-500 mx-2"
-                    >
-                      <PencilIcon className="h-5 w-5" />
-                    </button>
-                    <button 
-                      onClick={() => setIsDeletingClient(client)}
-                      className="text-gray-400 hover:text-gray-500 mx-2"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                    <button className="text-gray-400 hover:text-gray-500 mx-2">
-                      <DocumentIcon className="h-5 w-5" />
-                    </button>
+            <tbody className="divide-y divide-[#E2E8F0] bg-white">
+              {filteredClients.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-[#64748B]">
+                    No clients found. Add a client to get started.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredClients.map((client) => (
+                  <tr key={client.id} className="hover:bg-[#F8FAFC] transition-colors">
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-[#0F172A]">{client.name}</td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-[#0F172A]">{client.email}</td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-[#0F172A]">{client.phone}</td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-[#0F172A]">{client.address}</td>
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                      <button 
+                        onClick={() => setEditingClient(client)}
+                        className="text-[#94A3B8] hover:text-[#0F172A] transition-colors mx-2 focus:outline-none focus:text-[#0F172A]"
+                      >
+                        <PencilIcon className="h-5 w-5" />
+                      </button>
+                      <button 
+                        onClick={() => setIsDeletingClient(client)}
+                        className="text-[#94A3B8] hover:text-[#0F172A] transition-colors mx-2 focus:outline-none focus:text-[#0F172A]"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                      <button 
+                        className="text-[#94A3B8] hover:text-[#0F172A] transition-colors mx-2 focus:outline-none focus:text-[#0F172A]"
+                      >
+                        <DocumentIcon className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      </div>
+      )}
 
       {/* Add Client Dialog */}
       <Dialog
@@ -152,6 +150,7 @@ export default function ClientsPage() {
         <ClientForm
           onSubmit={handleAddClient}
           onCancel={() => setIsAddingClient(false)}
+          isLoading={isLoading}
         />
       </Dialog>
 
@@ -166,6 +165,7 @@ export default function ClientsPage() {
             initialData={editingClient}
             onSubmit={handleEditClient}
             onCancel={() => setEditingClient(null)}
+            isLoading={isLoading}
           />
         )}
       </Dialog>
@@ -177,25 +177,26 @@ export default function ClientsPage() {
         title="Delete Client"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-[#0F172A]">
             Are you sure you want to delete {isDeletingClient?.name}? This action cannot be undone.
           </p>
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setIsDeletingClient(null)}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="rounded-lg border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm font-medium text-[#0F172A] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#00B86B] focus:ring-offset-2"
             >
               Cancel
             </button>
             <button
               onClick={handleDeleteClient}
-              className="rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="rounded-lg border border-transparent bg-red-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              disabled={isLoading}
             >
-              Delete
+              {isLoading ? 'Deleting...' : 'Delete'}
             </button>
           </div>
         </div>
       </Dialog>
-    </DashboardLayout>
+    </div>
   );
 } 
