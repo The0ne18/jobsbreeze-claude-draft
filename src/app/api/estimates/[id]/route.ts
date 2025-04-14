@@ -9,7 +9,7 @@ type EstimateParams = { params: { id: string } };
 // GET /api/estimates/[id] - Get a single estimate
 export async function GET(
   request: NextRequest,
-  { params }: EstimateParams
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -44,7 +44,7 @@ export async function GET(
 // PUT /api/estimates/[id] - Update an estimate
 export async function PUT(
   request: NextRequest,
-  { params }: EstimateParams
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -126,7 +126,7 @@ export async function PUT(
 // DELETE /api/estimates/[id] - Delete an estimate
 export async function DELETE(
   request: NextRequest,
-  { params }: EstimateParams
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);

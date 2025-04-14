@@ -20,6 +20,14 @@ export default [
   ...compat.extends('next/core-web-vitals'),
   {
     files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: './tsconfig.json',
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
     rules: {
       // Enforce Supabase client usage
       'no-restricted-imports': ['error', {
