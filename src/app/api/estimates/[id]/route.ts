@@ -13,7 +13,7 @@ interface RouteContext {
 // GET /api/estimates/[id] - Get a single estimate
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } } // Use standard inline destructuring
+  context: RouteContext // Use the explicit context type
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,7 +23,7 @@ export async function GET(
 
     const estimate = await prisma.estimate.findUnique({
       where: {
-        id: params.id, // Access params directly
+        id: context.params.id, // Access id via context.params.id
       },
       include: {
         client: true,
@@ -48,7 +48,7 @@ export async function GET(
 // PUT /api/estimates/[id] - Update an estimate
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } } // Use standard inline destructuring
+  context: RouteContext // Use the explicit context type
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -81,14 +81,14 @@ export async function PUT(
       // Delete existing line items
       await prisma.lineItem.deleteMany({
         where: {
-          estimateId: params.id,
+          estimateId: context.params.id, // Access id via context.params.id
         },
       });
 
       // Update the estimate and create new line items
       return prisma.estimate.update({
         where: {
-          id: params.id,
+          id: context.params.id, // Access id via context.params.id
         },
         data: {
           clientId,
@@ -130,7 +130,7 @@ export async function PUT(
 // DELETE /api/estimates/[id] - Delete an estimate
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } } // Use standard inline destructuring
+  context: RouteContext // Use the explicit context type
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -140,7 +140,7 @@ export async function DELETE(
 
     await prisma.estimate.delete({
       where: {
-        id: params.id, // Access params directly
+        id: context.params.id, // Access id via context.params.id
       },
     });
 
