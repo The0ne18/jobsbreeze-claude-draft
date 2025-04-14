@@ -6,9 +6,9 @@ import { format } from 'date-fns';
 import { PencilIcon, FolderOpenIcon } from '@heroicons/react/24/outline';
 
 interface Estimate {
-  id: number;
+  id: string;
   estimateId: string;
-  clientId: number;
+  clientId: string;
   client: {
     name: string;
   };

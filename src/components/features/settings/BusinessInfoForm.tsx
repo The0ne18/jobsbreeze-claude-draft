@@ -113,6 +113,44 @@ export default function BusinessInfoForm({ initialData, onSubmit, isSubmitting }
           {errors.website && <p className="text-red-500 text-sm mt-1">{errors.website.message}</p>}
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="space-y-1.5">
+            <label htmlFor="taxRate" className="block text-sm font-medium text-gray-700">
+              Default Tax Rate (%)
+            </label>
+            <input
+              id="taxRate"
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              {...register('taxRate', { valueAsNumber: true })}
+              className={`w-full h-11 sm:h-12 px-4 rounded-lg border ${
+                errors.taxRate ? 'border-red-500' : 'border-gray-300'
+              } text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+              placeholder="0.00"
+            />
+            {errors.taxRate && <p className="text-red-500 text-sm mt-1">{errors.taxRate.message}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="invoiceDueDays" className="block text-sm font-medium text-gray-700">
+              Default Payment Terms (Days)
+            </label>
+            <input
+              id="invoiceDueDays"
+              type="number"
+              min="0"
+              {...register('invoiceDueDays', { valueAsNumber: true })}
+              className={`w-full h-11 sm:h-12 px-4 rounded-lg border ${
+                errors.invoiceDueDays ? 'border-red-500' : 'border-gray-300'
+              } text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+              placeholder="14"
+            />
+            {errors.invoiceDueDays && <p className="text-red-500 text-sm mt-1">{errors.invoiceDueDays.message}</p>}
+          </div>
+        </div>
+
         <div className="pt-4">
           <button
             type="submit"

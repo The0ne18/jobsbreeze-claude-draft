@@ -1,5 +1,5 @@
 export interface Client {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone?: string;
@@ -7,7 +7,7 @@ export interface Client {
 }
 
 export interface LineItem {
-  id?: number;
+  id?: string;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -16,7 +16,7 @@ export interface LineItem {
 }
 
 export interface EstimateFormData {
-  clientId: number;
+  clientId: string;
   date: Date;
   expiryDate?: Date;
   notes?: string;
@@ -26,7 +26,7 @@ export interface EstimateFormData {
 }
 
 export interface Estimate extends Omit<EstimateFormData, 'date' | 'expiryDate'> {
-  id: number;
+  id: string;
   estimateId: string;
   status: 'PENDING' | 'APPROVED' | 'DECLINED';
   isDraft: boolean;

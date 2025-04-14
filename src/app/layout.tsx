@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import QueryProvider from "@/components/providers/QueryProvider";
 import ToastProvider from "@/components/providers/ToastProvider";
 import { SupabaseAuthProvider } from "@/components/providers/SupabaseAuthProvider";
+import NextAuthProvider from "@/components/providers/NextAuthProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,9 +25,11 @@ export default function RootLayout({
         <QueryProvider>
           <SupabaseAuthProvider>
             <AuthProvider>
-              <ToastProvider>
-                {children}
-              </ToastProvider>
+              <NextAuthProvider>
+                <ToastProvider>
+                  {children}
+                </ToastProvider>
+              </NextAuthProvider>
             </AuthProvider>
           </SupabaseAuthProvider>
         </QueryProvider>

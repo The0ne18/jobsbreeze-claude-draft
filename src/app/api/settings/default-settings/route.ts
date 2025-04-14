@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { defaultSettingsSchema } from '@/types/settings';
-
-// This is a mock implementation. In a real app, this would use a database.
-let mockSettings = new Map();
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function PUT(request: Request) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user?.id;
+    // Use the ID as a string, no need to parseInt for UUID
+    const userId = session.user.id;
     const body = await request.json();
 
     // Validate request body
@@ -25,34 +25,38 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Get existing settings or create new ones
-    let settings = mockSettings.get(userId) || {
-      businessInfo: {
+    // Update or create settings
+    const settings = await prisma.settings.upsert({
+      where: { userId },
+      create: {
+        userId,
         businessName: '',
         email: '',
         phone: '',
         address: '',
         website: '',
+        ...validationResult.data,
+      },
+      update: validationResult.data,
+    });
+
+    // Transform the data to match the expected format
+    return NextResponse.json({
+      businessInfo: {
+        businessName: settings.businessName,
+        email: settings.email,
+        phone: settings.phone,
+        address: settings.address,
+        website: settings.website,
       },
       defaultSettings: {
-        defaultTaxRate: 0,
-        estimateExpiry: 30,
-        invoiceDue: 14,
-        defaultTerms: 'Payment is due within 14 days of invoice date.',
-        defaultNotes: 'Thank you for your business!',
+        defaultTaxRate: settings.defaultTaxRate,
+        estimateExpiry: settings.estimateExpiry,
+        invoiceDue: settings.invoiceDue,
+        defaultTerms: settings.defaultTerms,
+        defaultNotes: settings.defaultNotes,
       },
-    };
-
-    // Update default settings
-    settings = {
-      ...settings,
-      defaultSettings: validationResult.data,
-    };
-
-    // Save updated settings
-    mockSettings.set(userId, settings);
-
-    return NextResponse.json(settings);
+    });
   } catch (error) {
     console.error('Error updating default settings:', error);
     return NextResponse.json(

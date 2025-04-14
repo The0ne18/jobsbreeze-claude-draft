@@ -30,9 +30,9 @@ export function useEstimates() {
 
   const { mutate: updateEstimate, isLoading: isUpdatingEstimate } = useMutation<
     Estimate,
-    { id: number; estimate: Partial<Estimate> }
+    { id: string; estimate: Partial<Estimate> }
   >({
-    mutationFn: ({ id, estimate }: { id: number; estimate: Partial<Estimate> }) => 
+    mutationFn: ({ id, estimate }: { id: string; estimate: Partial<Estimate> }) => 
       estimateService.updateEstimate(id, estimate),
     onSuccess: async () => {
       await refetchEstimates();
@@ -42,9 +42,9 @@ export function useEstimates() {
 
   const { mutate: deleteEstimate, isLoading: isDeletingEstimate } = useMutation<
     void,
-    number
+    string
   >({
-    mutationFn: (id: number) => estimateService.deleteEstimate(id),
+    mutationFn: (id: string) => estimateService.deleteEstimate(id),
     onSuccess: async () => {
       await refetchEstimates();
     },
@@ -53,9 +53,9 @@ export function useEstimates() {
 
   const { mutate: addLineItem, isLoading: isAddingLineItem } = useMutation<
     LineItem,
-    { estimateId: number; lineItem: Omit<LineItem, 'id'> }
+    { estimateId: string; lineItem: Omit<LineItem, 'id'> }
   >({
-    mutationFn: ({ estimateId, lineItem }: { estimateId: number; lineItem: Omit<LineItem, 'id'> }) =>
+    mutationFn: ({ estimateId, lineItem }: { estimateId: string; lineItem: Omit<LineItem, 'id'> }) =>
       estimateService.addLineItem(estimateId, lineItem),
     onSuccess: async () => {
       await refetchEstimates();
@@ -65,11 +65,11 @@ export function useEstimates() {
 
   const { mutate: updateLineItem, isLoading: isUpdatingLineItem } = useMutation<
     LineItem,
-    { estimateId: number; lineItemId: number; lineItem: Partial<LineItem> }
+    { estimateId: string; lineItemId: string; lineItem: Partial<LineItem> }
   >({
     mutationFn: ({ estimateId, lineItemId, lineItem }: { 
-      estimateId: number; 
-      lineItemId: number; 
+      estimateId: string; 
+      lineItemId: string; 
       lineItem: Partial<LineItem> 
     }) => estimateService.updateLineItem(estimateId, lineItemId, lineItem),
     onSuccess: async () => {
@@ -80,9 +80,9 @@ export function useEstimates() {
 
   const { mutate: deleteLineItem, isLoading: isDeletingLineItem } = useMutation<
     void,
-    { estimateId: number; lineItemId: number }
+    { estimateId: string; lineItemId: string }
   >({
-    mutationFn: ({ estimateId, lineItemId }: { estimateId: number; lineItemId: number }) =>
+    mutationFn: ({ estimateId, lineItemId }: { estimateId: string; lineItemId: string }) =>
       estimateService.deleteLineItem(estimateId, lineItemId),
     onSuccess: async () => {
       await refetchEstimates();
@@ -91,28 +91,28 @@ export function useEstimates() {
   });
 
   const handleUpdateEstimate = useCallback(
-    (id: number, estimate: Partial<Estimate>) => {
+    (id: string, estimate: Partial<Estimate>) => {
       return updateEstimate({ id, estimate });
     },
     [updateEstimate]
   );
 
   const handleAddLineItem = useCallback(
-    (estimateId: number, lineItem: Omit<LineItem, 'id'>) => {
+    (estimateId: string, lineItem: Omit<LineItem, 'id'>) => {
       return addLineItem({ estimateId, lineItem });
     },
     [addLineItem]
   );
 
   const handleUpdateLineItem = useCallback(
-    (estimateId: number, lineItemId: number, lineItem: Partial<LineItem>) => {
+    (estimateId: string, lineItemId: string, lineItem: Partial<LineItem>) => {
       return updateLineItem({ estimateId, lineItemId, lineItem });
     },
     [updateLineItem]
   );
 
   const handleDeleteLineItem = useCallback(
-    (estimateId: number, lineItemId: number) => {
+    (estimateId: string, lineItemId: string) => {
       return deleteLineItem({ estimateId, lineItemId });
     },
     [deleteLineItem]

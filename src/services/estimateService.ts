@@ -21,7 +21,7 @@ class EstimateService {
     }
   }
 
-  async getEstimate(id: number): Promise<Estimate> {
+  async getEstimate(id: string): Promise<Estimate> {
     try {
       return await this.api.get<Estimate>(`/estimates/${id}`);
     } catch (error) {
@@ -45,7 +45,7 @@ class EstimateService {
     }
   }
 
-  async updateEstimate(id: number, estimate: Partial<Estimate>): Promise<Estimate> {
+  async updateEstimate(id: string, estimate: Partial<Estimate>): Promise<Estimate> {
     try {
       return await this.api.put<Estimate>(`/estimates/${id}`, estimate);
     } catch (error) {
@@ -57,7 +57,7 @@ class EstimateService {
     }
   }
 
-  async deleteEstimate(id: number): Promise<void> {
+  async deleteEstimate(id: string): Promise<void> {
     try {
       await this.api.delete(`/estimates/${id}`);
     } catch (error) {
@@ -69,7 +69,7 @@ class EstimateService {
     }
   }
 
-  async addLineItem(estimateId: number, lineItem: Omit<LineItem, 'id'>): Promise<LineItem> {
+  async addLineItem(estimateId: string, lineItem: Omit<LineItem, 'id'>): Promise<LineItem> {
     try {
       return await this.api.post<LineItem>(`/estimates/${estimateId}/line-items`, lineItem);
     } catch (error) {
@@ -81,7 +81,7 @@ class EstimateService {
     }
   }
 
-  async updateLineItem(estimateId: number, lineItemId: number, lineItem: Partial<LineItem>): Promise<LineItem> {
+  async updateLineItem(estimateId: string, lineItemId: string, lineItem: Partial<LineItem>): Promise<LineItem> {
     try {
       return await this.api.put<LineItem>(`/estimates/${estimateId}/line-items/${lineItemId}`, lineItem);
     } catch (error) {
@@ -93,7 +93,7 @@ class EstimateService {
     }
   }
 
-  async deleteLineItem(estimateId: number, lineItemId: number): Promise<void> {
+  async deleteLineItem(estimateId: string, lineItemId: string): Promise<void> {
     try {
       await this.api.delete(`/estimates/${estimateId}/line-items/${lineItemId}`);
     } catch (error) {

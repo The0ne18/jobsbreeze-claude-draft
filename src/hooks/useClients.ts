@@ -15,8 +15,7 @@ export function useClients() {
   } = useQuery({
     queryKey: CLIENTS_QUERY_KEY,
     queryFn: async () => {
-      const response = await apiClient.get<Client[]>('/clients');
-      return response.data;
+      return apiClient.get<Client[]>('/clients');
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -24,8 +23,7 @@ export function useClients() {
 
   const addClientMutation = useMutation({
     mutationFn: async (data: ClientFormData) => {
-      const response = await apiClient.post<Client>('/clients', data);
-      return response.data;
+      return apiClient.post<Client>('/clients', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CLIENTS_QUERY_KEY });
@@ -33,9 +31,8 @@ export function useClients() {
   });
 
   const updateClientMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: ClientFormData }) => {
-      const response = await apiClient.put<Client>(`/clients/${id}`, data);
-      return response.data;
+    mutationFn: async ({ id, data }: { id: string; data: ClientFormData }) => {
+      return apiClient.put<Client>(`/clients/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CLIENTS_QUERY_KEY });
@@ -43,7 +40,7 @@ export function useClients() {
   });
 
   const deleteClientMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       await apiClient.delete(`/clients/${id}`);
     },
     onSuccess: () => {

@@ -7,7 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "setup-db": "node scripts/apply-migrations.js",
+    "verify-db": "node scripts/verify-supabase-setup.js",
+    "setup-db-api": "node scripts/api-setup-supabase.js",
+    "setup-db-direct": "node scripts/setup-db-direct.js",
+    "get-admin-key": "node scripts/generate-admin-token.js",
+    "setup-db-with-admin": "node scripts/setup-db-with-admin.js",
+    "test-supabase": "node scripts/test-supabase-connection.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.8.0",
@@ -44,6 +51,7 @@
     "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",
+    "supabase": "^2.20.12",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5"

@@ -14,14 +14,14 @@ export type ClientFormData = z.infer<typeof clientSchema>;
 
 // Base client interface with all possible fields
 export interface Client extends ClientFormData {
-  id: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  id: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Simplified client interface for use in invoices and estimates
 export interface SimpleClient {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone?: string;

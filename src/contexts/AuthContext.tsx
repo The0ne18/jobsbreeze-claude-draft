@@ -11,7 +11,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: ApiError | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -66,6 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw { message: error.message, status: 400 };
       }
 
+      // If not rememberMe, we'll clear the session on window close
+      if (!rememberMe) {
+        // Remove any existing handler first
+        window.removeEventListener('beforeunload', handleSessionCleanup);
+        window.addEventListener('beforeunload', handleSessionCleanup);
+      }
+
       router.push('/dashboard');
     } catch (err) {
       const apiError = err as ApiError;
@@ -74,6 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Define the cleanup handler outside to be able to remove it
+  const handleSessionCleanup = async () => {
+    await supabase.auth.signOut();
   };
 
   const register = async (email: string, password: string) => {

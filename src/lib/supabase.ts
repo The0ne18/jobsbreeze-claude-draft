@@ -1,7 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dsulxpgfhzuilpvkxjul.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzdWx4cGdmaHp1aWxwdmt4anVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ1NDY1NTYsImV4cCI6MjA2MDEyMjU1Nn0.Fgkkz4YXRjXv4Tk-UVG0UqcCQnZpi8KWoiOgWkdUN1s';
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error('Missing environment variable: NEXT_PUBLIC_SUPABASE_URL');
+}
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error('Missing environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY');
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Create a single supabase client for interacting with your database
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

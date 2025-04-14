@@ -3,7 +3,7 @@ import { SimpleClient } from './client';
 
 // Type for line items
 export interface LineItem {
-  id?: number;
+  id?: string;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -11,9 +11,12 @@ export interface LineItem {
   category: string;
 }
 
+// Estimate status type
+export type EstimateStatus = 'PENDING' | 'APPROVED' | 'DECLINED';
+
 // Zod schema for estimate validation
 export const estimateSchema = z.object({
-  clientId: z.number(),
+  clientId: z.string(),
   date: z.date(),
   expiryDate: z.date().optional(),
   notes: z.string().optional(),
@@ -36,7 +39,7 @@ export type EstimateFormData = z.infer<typeof estimateSchema>;
 
 // Interface for estimate data
 export interface Estimate extends Omit<EstimateFormData, 'date' | 'expiryDate'> {
-  id: number;
+  id: string;
   estimateId: string;
   status: EstimateStatus;
   isDraft: boolean;
@@ -46,9 +49,6 @@ export interface Estimate extends Omit<EstimateFormData, 'date' | 'expiryDate'> 
   updatedAt: string;
   client: SimpleClient;
 }
-
-// Estimate status types
-export type EstimateStatus = 'PENDING' | 'APPROVED' | 'DECLINED';
 
 // Type for grouped estimates by month
 export interface EstimateGroup {

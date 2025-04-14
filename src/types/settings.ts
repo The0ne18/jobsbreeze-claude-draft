@@ -7,6 +7,8 @@ export const businessInfoSchema = z.object({
   phone: z.string().default(''),
   address: z.string().default(''),
   website: z.string().default(''),
+  taxRate: z.number().min(0).max(100).default(0),
+  invoiceDueDays: z.number().min(0).default(14),
 });
 
 // Define the default settings schema
@@ -31,6 +33,8 @@ export type BusinessInfo = {
   phone: string;
   address: string;
   website: string;
+  taxRate: number;
+  invoiceDueDays: number;
 };
 
 export type DefaultSettings = {

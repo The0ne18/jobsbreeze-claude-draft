@@ -40,7 +40,7 @@ export function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
       lineItems: invoice.lineItems,
     } : {
       number: '',
-      clientId: 0,
+      clientId: '',
       status: 'draft',
       total: 0,
       dueDate: new Date(),

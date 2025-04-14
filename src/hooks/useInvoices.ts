@@ -30,9 +30,9 @@ export function useInvoices() {
 
   const { mutate: updateInvoice, isLoading: isUpdatingInvoice } = useMutation<
     Invoice,
-    { id: number; invoice: Partial<Invoice> }
+    { id: string; invoice: Partial<Invoice> }
   >({
-    mutationFn: ({ id, invoice }: { id: number; invoice: Partial<Invoice> }) => 
+    mutationFn: ({ id, invoice }: { id: string; invoice: Partial<Invoice> }) => 
       invoiceService.updateInvoice(id, invoice),
     onSuccess: async () => {
       await refetchInvoices();
@@ -42,9 +42,9 @@ export function useInvoices() {
 
   const { mutate: deleteInvoice, isLoading: isDeletingInvoice } = useMutation<
     void,
-    number
+    string
   >({
-    mutationFn: (id: number) => invoiceService.deleteInvoice(id),
+    mutationFn: (id: string) => invoiceService.deleteInvoice(id),
     onSuccess: async () => {
       await refetchInvoices();
     },
@@ -53,9 +53,9 @@ export function useInvoices() {
 
   const { mutate: addLineItem, isLoading: isAddingLineItem } = useMutation<
     LineItem,
-    { invoiceId: number; lineItem: Omit<LineItem, 'id'> }
+    { invoiceId: string; lineItem: Omit<LineItem, 'id'> }
   >({
-    mutationFn: ({ invoiceId, lineItem }: { invoiceId: number; lineItem: Omit<LineItem, 'id'> }) =>
+    mutationFn: ({ invoiceId, lineItem }: { invoiceId: string; lineItem: Omit<LineItem, 'id'> }) =>
       invoiceService.addLineItem(invoiceId, lineItem),
     onSuccess: async () => {
       await refetchInvoices();
@@ -65,11 +65,11 @@ export function useInvoices() {
 
   const { mutate: updateLineItem, isLoading: isUpdatingLineItem } = useMutation<
     LineItem,
-    { invoiceId: number; lineItemId: number; lineItem: Partial<LineItem> }
+    { invoiceId: string; lineItemId: string; lineItem: Partial<LineItem> }
   >({
     mutationFn: ({ invoiceId, lineItemId, lineItem }: { 
-      invoiceId: number; 
-      lineItemId: number; 
+      invoiceId: string; 
+      lineItemId: string; 
       lineItem: Partial<LineItem> 
     }) => invoiceService.updateLineItem(invoiceId, lineItemId, lineItem),
     onSuccess: async () => {
@@ -80,9 +80,9 @@ export function useInvoices() {
 
   const { mutate: deleteLineItem, isLoading: isDeletingLineItem } = useMutation<
     void,
-    { invoiceId: number; lineItemId: number }
+    { invoiceId: string; lineItemId: string }
   >({
-    mutationFn: ({ invoiceId, lineItemId }: { invoiceId: number; lineItemId: number }) =>
+    mutationFn: ({ invoiceId, lineItemId }: { invoiceId: string; lineItemId: string }) =>
       invoiceService.deleteLineItem(invoiceId, lineItemId),
     onSuccess: async () => {
       await refetchInvoices();
@@ -91,28 +91,28 @@ export function useInvoices() {
   });
 
   const handleUpdateInvoice = useCallback(
-    (id: number, invoice: Partial<Invoice>) => {
+    (id: string, invoice: Partial<Invoice>) => {
       return updateInvoice({ id, invoice });
     },
     [updateInvoice]
   );
 
   const handleAddLineItem = useCallback(
-    (invoiceId: number, lineItem: Omit<LineItem, 'id'>) => {
+    (invoiceId: string, lineItem: Omit<LineItem, 'id'>) => {
       return addLineItem({ invoiceId, lineItem });
     },
     [addLineItem]
   );
 
   const handleUpdateLineItem = useCallback(
-    (invoiceId: number, lineItemId: number, lineItem: Partial<LineItem>) => {
+    (invoiceId: string, lineItemId: string, lineItem: Partial<LineItem>) => {
       return updateLineItem({ invoiceId, lineItemId, lineItem });
     },
     [updateLineItem]
   );
 
   const handleDeleteLineItem = useCallback(
-    (invoiceId: number, lineItemId: number) => {
+    (invoiceId: string, lineItemId: string) => {
       return deleteLineItem({ invoiceId, lineItemId });
     },
     [deleteLineItem]

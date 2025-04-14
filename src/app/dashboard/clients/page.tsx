@@ -8,13 +8,16 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { Client, ClientFormData } from '@/types/client';
 import { useClients } from '@/hooks/useClients';
+import { useRouter } from 'next/navigation';
 
 export default function ClientsPage() {
+  const router = useRouter();
   const { clients, isLoading, error, addClient, updateClient, deleteClient, isAdding, isUpdating, isDeleting } = useClients();
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [isDeletingClient, setIsDeletingClient] = useState<Client | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
   const handleAddClient = async (data: ClientFormData) => {
     try {
@@ -22,6 +25,7 @@ export default function ClientsPage() {
       setIsAddingClient(false);
     } catch (error) {
       console.error('Error adding client:', error);
+      throw error; // Let the form handle the error
     }
   };
 
@@ -32,27 +36,50 @@ export default function ClientsPage() {
       setEditingClient(null);
     } catch (error) {
       console.error('Error updating client:', error);
+      throw error; // Let the form handle the error
     }
   };
 
   const handleDeleteClient = async () => {
     if (!isDeletingClient) return;
     try {
+      setLoadingStates(prev => ({ ...prev, [isDeletingClient.id]: true }));
       await deleteClient(isDeletingClient.id);
       setIsDeletingClient(null);
     } catch (error) {
       console.error('Error deleting client:', error);
+      throw error;
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [isDeletingClient.id]: false }));
     }
   };
 
+  const handleViewInvoices = (clientId: string) => {
+    router.push(`/dashboard/invoices?clientId=${clientId}`);
+  };
+
   const filteredClients = useMemo(() => 
-    clients.filter(client => 
+    clients.filter((client: Client) => 
       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (client.phone ? client.phone.toLowerCase().includes(searchQuery.toLowerCase()) : false)
     ),
     [clients, searchQuery]
   );
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <p className="text-red-500 mb-4">{error.message || 'An error occurred while loading clients'}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="inline-flex items-center rounded-lg bg-[#00B86B] px-4 py-2 text-sm font-medium text-white hover:bg-[#00B86B]/90 focus:outline-none focus:ring-2 focus:ring-[#00B86B] focus:ring-offset-2 shadow-sm transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>
@@ -86,10 +113,6 @@ export default function ClientsPage() {
           <div className="flex justify-center py-8">
             <LoadingSpinner />
           </div>
-        ) : error ? (
-          <div className="flex justify-center py-8">
-            <p className="text-red-500">{error.message || 'An error occurred while loading clients'}</p>
-          </div>
         ) : (
           <div className="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-sm">
             <table className="min-w-full divide-y divide-[#E2E8F0]">
@@ -106,7 +129,7 @@ export default function ClientsPage() {
                 {filteredClients.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-[#64748B]">
-                      No clients found. Add a client to get started.
+                      {searchQuery ? 'No clients found matching your search.' : 'No clients found. Add a client to get started.'}
                     </td>
                   </tr>
                 ) : (
@@ -119,18 +142,23 @@ export default function ClientsPage() {
                       <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                         <button 
                           onClick={() => setEditingClient(client)}
-                          className="text-[#94A3B8] hover:text-[#0F172A] transition-colors mx-2 focus:outline-none focus:text-[#0F172A]"
+                          disabled={loadingStates[client.id]}
+                          className="text-[#94A3B8] hover:text-[#0F172A] transition-colors mx-2 focus:outline-none focus:text-[#0F172A] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <PencilIcon className="h-5 w-5" />
                         </button>
                         <button 
                           onClick={() => setIsDeletingClient(client)}
-                          className="text-[#94A3B8] hover:text-[#0F172A] transition-colors mx-2 focus:outline-none focus:text-[#0F172A]"
+                          disabled={loadingStates[client.id]}
+                          className="text-[#94A3B8] hover:text-[#0F172A] transition-colors mx-2 focus:outline-none focus:text-[#0F172A] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <TrashIcon className="h-5 w-5" />
                         </button>
                         <button 
-                          className="text-[#94A3B8] hover:text-[#0F172A] transition-colors mx-2 focus:outline-none focus:text-[#0F172A]"
+                          onClick={() => handleViewInvoices(client.id)}
+                          disabled={loadingStates[client.id]}
+                          className="text-[#94A3B8] hover:text-[#0F172A] transition-colors mx-2 focus:outline-none focus:text-[#0F172A] disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="View client's invoices"
                         >
                           <DocumentIcon className="h-5 w-5" />
                         </button>

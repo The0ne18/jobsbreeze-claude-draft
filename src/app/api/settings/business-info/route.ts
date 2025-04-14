@@ -1,62 +1,141 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { supabase } from '@/lib/supabase';
 import { businessInfoSchema } from '@/types/settings';
+import { NextResponse } from 'next/server';
 
-// This is a mock implementation. In a real app, this would use a database.
-let mockSettings = new Map();
-
-export async function PUT(request: Request) {
+export async function GET() {
   try {
-    const session = await getServerSession();
-
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user?.id;
-    const body = await request.json();
+    const { data, error } = await supabase
+      .from('business_info')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
 
-    // Validate request body
-    const validationResult = businessInfoSchema.safeParse(body);
-    if (!validationResult.success) {
-      return NextResponse.json(
-        { error: 'Invalid data', details: validationResult.error.format() },
-        { status: 400 }
-      );
+    if (error) {
+      return NextResponse.json({ 
+        error: error.message,
+        details: error
+      }, { status: 500 });
     }
 
-    // Get existing settings or create new ones
-    let settings = mockSettings.get(userId) || {
-      businessInfo: {
-        businessName: '',
-        email: '',
-        phone: '',
-        address: '',
-        website: '',
-      },
-      defaultSettings: {
-        defaultTaxRate: 0,
-        estimateExpiry: 30,
-        invoiceDue: 14,
-        defaultTerms: 'Payment is due within 14 days of invoice date.',
-        defaultNotes: 'Thank you for your business!',
-      },
-    };
+    // Transform snake_case to camelCase for the response
+    const transformedData = data ? {
+      businessName: data.business_name,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      website: data.website,
+      taxRate: data.tax_rate,
+      invoiceDueDays: data.invoice_due_days,
+    } : {};
 
-    // Update business info
-    settings = {
-      ...settings,
-      businessInfo: validationResult.data,
-    };
-
-    // Save updated settings
-    mockSettings.set(userId, settings);
-
-    return NextResponse.json(settings);
+    return NextResponse.json(transformedData);
   } catch (error) {
-    console.error('Error updating business info:', error);
     return NextResponse.json(
-      { error: 'An error occurred while updating business info' },
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const validatedData = businessInfoSchema.parse(body);
+
+    const { data, error } = await supabase
+      .from('business_info')
+      .upsert({
+        user_id: user.id,
+        business_name: validatedData.businessName,
+        email: validatedData.email,
+        phone: validatedData.phone,
+        address: validatedData.address,
+        website: validatedData.website,
+        tax_rate: validatedData.taxRate,
+        invoice_due_days: validatedData.invoiceDueDays,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ 
+        error: error.message,
+        details: error
+      }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const validatedData = businessInfoSchema.parse(body);
+
+    const { data, error } = await supabase
+      .from('business_info')
+      .upsert({
+        user_id: user.id,
+        business_name: validatedData.businessName,
+        email: validatedData.email,
+        phone: validatedData.phone,
+        address: validatedData.address,
+        website: validatedData.website,
+        tax_rate: validatedData.taxRate,
+        invoice_due_days: validatedData.invoiceDueDays,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ 
+        error: error.message,
+        details: error
+      }, { status: 500 });
+    }
+
+    // Transform snake_case to camelCase for the response
+    const transformedData = {
+      businessName: data.business_name,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      website: data.website,
+      taxRate: data.tax_rate,
+      invoiceDueDays: data.invoice_due_days,
+    };
+
+    return NextResponse.json(transformedData);
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

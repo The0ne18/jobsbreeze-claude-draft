@@ -42,6 +42,22 @@ export default function SignUpForm() {
         <p className="text-[#64748B] text-base">Create an account to get started</p>
       </div>
       
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <XCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <label htmlFor="email" className="block text-base font-medium text-[#0F172A]">
@@ -100,13 +116,6 @@ export default function SignUpForm() {
             )}
           </div>
         </div>
-
-        {error && (
-          <div className="flex items-center gap-2 text-[#EF4444] text-sm bg-red-50 px-3 py-2 rounded-md">
-            <XCircleIcon className="w-5 h-5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
 
         <button
           type="submit"

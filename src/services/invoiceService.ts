@@ -21,7 +21,7 @@ class InvoiceService {
     }
   }
 
-  async getInvoice(id: number): Promise<Invoice> {
+  async getInvoice(id: string): Promise<Invoice> {
     try {
       return await this.api.get<Invoice>(`/invoices/${id}`);
     } catch (error) {
@@ -45,7 +45,7 @@ class InvoiceService {
     }
   }
 
-  async updateInvoice(id: number, invoice: Partial<Invoice>): Promise<Invoice> {
+  async updateInvoice(id: string, invoice: Partial<Invoice>): Promise<Invoice> {
     try {
       return await this.api.put<Invoice>(`/invoices/${id}`, invoice);
     } catch (error) {
@@ -57,7 +57,7 @@ class InvoiceService {
     }
   }
 
-  async deleteInvoice(id: number): Promise<void> {
+  async deleteInvoice(id: string): Promise<void> {
     try {
       await this.api.delete(`/invoices/${id}`);
     } catch (error) {
@@ -69,7 +69,7 @@ class InvoiceService {
     }
   }
 
-  async addLineItem(invoiceId: number, lineItem: Omit<LineItem, 'id'>): Promise<LineItem> {
+  async addLineItem(invoiceId: string, lineItem: Omit<LineItem, 'id'>): Promise<LineItem> {
     try {
       return await this.api.post<LineItem>(`/invoices/${invoiceId}/line-items`, lineItem);
     } catch (error) {
@@ -81,7 +81,7 @@ class InvoiceService {
     }
   }
 
-  async updateLineItem(invoiceId: number, lineItemId: number, lineItem: Partial<LineItem>): Promise<LineItem> {
+  async updateLineItem(invoiceId: string, lineItemId: string, lineItem: Partial<LineItem>): Promise<LineItem> {
     try {
       return await this.api.put<LineItem>(`/invoices/${invoiceId}/line-items/${lineItemId}`, lineItem);
     } catch (error) {
@@ -93,7 +93,7 @@ class InvoiceService {
     }
   }
 
-  async deleteLineItem(invoiceId: number, lineItemId: number): Promise<void> {
+  async deleteLineItem(invoiceId: string, lineItemId: string): Promise<void> {
     try {
       await this.api.delete(`/invoices/${invoiceId}/line-items/${lineItemId}`);
     } catch (error) {

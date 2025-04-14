@@ -100,7 +100,12 @@ export default function LoginPage() {
 
     try {
       await login(email, password, rememberMe);
-      // Redirect is handled in the auth context
+      // Redirect to the from parameter if it exists, otherwise to dashboard
+      if (from) {
+        router.push(decodeURIComponent(from));
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err) {
       // Error is handled by the auth context and set above in the useEffect
     }
@@ -202,7 +207,7 @@ export default function LoginPage() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 text-[#00B86B] focus:ring-[#00B86B] border-gray-300 rounded"
+                className="h-4 w-4 rounded border-gray-300 text-[#00B86B] focus:ring-[#00B86B]"
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
                 Remember me
@@ -217,9 +222,18 @@ export default function LoginPage() {
           </div>
 
           {errors.general && (
-            <div className="flex items-center gap-2 text-red-500 text-sm bg-red-50 px-3 py-2 rounded-md">
-              <XCircleIcon className="h-5 w-5 flex-shrink-0" />
-              <span>{errors.general}</span>
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <XCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Error</h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>{errors.general}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -227,10 +241,10 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#00B86B] hover:bg-[#00B86B]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00B86B] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#00B86B] hover:bg-[#00A25F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00B86B] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
-                <LoadingSpinner size="sm" className="text-white" />
+                <LoadingSpinner className="h-5 w-5" />
               ) : (
                 'Sign in'
               )}

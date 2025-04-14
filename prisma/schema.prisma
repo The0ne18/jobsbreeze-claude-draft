@@ -14,15 +14,16 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  settings  Settings?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Client {
-  id        Int        @id @default(autoincrement())
+  id        String     @id @default(uuid())
   name      String
   email     String     @unique
   phone     String?
@@ -34,49 +35,69 @@ model Client {
 }
 
 model Estimate {
-  id            Int       @id @default(autoincrement())
-  estimateId    String    @unique // Format: #XX-YYYYMMDD-NN
-  clientId      Int
-  client        Client    @relation(fields: [clientId], references: [id])
-  status        String    @default("PENDING") // PENDING, APPROVED, DECLINED
-  isDraft       Boolean   @default(true)
+  id            String     @id @default(uuid())
+  estimateId    String     @unique // Format: #XX-YYYYMMDD-NN
+  clientId      String
+  client        Client     @relation(fields: [clientId], references: [id])
+  status        String     @default("PENDING") // PENDING, APPROVED, DECLINED
+  isDraft       Boolean    @default(true)
   amount        Float
-  tax           Float     @default(0)
-  taxRate       Float     @default(0)
+  tax           Float      @default(0)
+  taxRate       Float      @default(0)
   subtotal      Float
-  date          DateTime  @default(now())
+  date          DateTime   @default(now())
   expiryDate    DateTime?
   notes         String?
   terms         String?
   lineItems     LineItem[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   @@index([clientId])
   @@index([status])
 }
 
 model LineItem {
-  id          Int      @id @default(autoincrement())
-  estimateId  Int
-  estimate    Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  estimateId  String
+  estimate    Estimate  @relation(fields: [estimateId], references: [id], onDelete: Cascade)
   description String
   quantity    Float
   unitPrice   Float
   amount      Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([estimateId])
 }
 
 model Item {
-  id          Int      @id @default(autoincrement())
+  id          String    @id @default(uuid())
   name        String
   description String?
   category    String
   price       Float
-  taxable     Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  taxable     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Settings {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id])
+  businessName    String    @default("")
+  email           String    @default("")
+  phone           String    @default("")
+  address         String    @default("")
+  website         String    @default("")
+  defaultTaxRate  Float     @default(0)
+  estimateExpiry  Int       @default(30)
+  invoiceDue      Int       @default(14)
+  defaultTerms    String    @default("Payment is due within 14 days of invoice date.")
+  defaultNotes    String    @default("Thank you for your business!")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
 }
