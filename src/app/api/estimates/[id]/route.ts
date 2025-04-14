@@ -2,15 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
-type RouteParams = {
-  params: {
-    id: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
 // GET /api/estimates/[id] - Get a single estimate
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
     // Initialize Supabase client
     const supabase = createClient(
@@ -32,7 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         clients (*),
         line_items (*)
       `)
-      .eq('id', params.id)
+      .eq('id', context.params.id)
       .single();
 
     if (error) {
@@ -55,7 +51,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 // PUT /api/estimates/[id] - Update an estimate
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
     // Initialize Supabase client
     const supabase = createClient(
@@ -93,7 +92,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const { error: deleteError } = await supabase
       .from('line_items')
       .delete()
-      .eq('estimate_id', params.id);
+      .eq('estimate_id', context.params.id);
 
     if (deleteError) {
       throw deleteError;
@@ -115,7 +114,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         is_draft,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.id)
+      .eq('id', context.params.id)
       .select()
       .single();
 
@@ -128,7 +127,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .from('line_items')
       .insert(
         line_items.map((item: any) => ({
-          estimate_id: params.id,
+          estimate_id: context.params.id,
           description: item.description,
           quantity: item.quantity,
           unit_price: item.unit_price,
@@ -148,7 +147,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         clients (*),
         line_items (*)
       `)
-      .eq('id', params.id)
+      .eq('id', context.params.id)
       .single();
 
     if (fetchError) {
@@ -166,7 +165,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 // DELETE /api/estimates/[id] - Delete an estimate
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
     // Initialize Supabase client
     const supabase = createClient(
@@ -184,7 +186,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const { error } = await supabase
       .from('estimates')
       .delete()
-      .eq('id', params.id);
+      .eq('id', context.params.id);
 
     if (error) {
       throw error;
