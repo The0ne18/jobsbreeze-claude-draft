@@ -1,12 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 
+type RouteContext = {
+  params: {
+    id: string;
+  };
+};
+
 // GET /api/estimates/[id] - Get a single estimate
 export async function GET(
-  request: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  context: RouteContext
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -40,8 +46,8 @@ export async function GET(
 
 // PUT /api/estimates/[id] - Update an estimate
 export async function PUT(
-  request: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  context: RouteContext
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -122,8 +128,8 @@ export async function PUT(
 
 // DELETE /api/estimates/[id] - Delete an estimate
 export async function DELETE(
-  request: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  context: RouteContext
 ) {
   try {
     const session = await getServerSession(authOptions);
