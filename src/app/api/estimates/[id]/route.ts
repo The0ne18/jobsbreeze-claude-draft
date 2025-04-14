@@ -13,7 +13,7 @@ interface RouteContext {
 // GET /api/estimates/[id] - Get a single estimate
 export async function GET(
   request: NextRequest,
-  context: RouteContext
+  context: any // Use any as a temporary diagnostic step
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,7 +23,7 @@ export async function GET(
 
     const estimate = await prisma.estimate.findUnique({
       where: {
-        id: context.params.id,
+        id: context.params.id, // Access params via context
       },
       include: {
         client: true,
@@ -48,7 +48,7 @@ export async function GET(
 // PUT /api/estimates/[id] - Update an estimate
 export async function PUT(
   request: NextRequest,
-  context: RouteContext
+  context: any // Use any as a temporary diagnostic step
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -130,7 +130,7 @@ export async function PUT(
 // DELETE /api/estimates/[id] - Delete an estimate
 export async function DELETE(
   request: NextRequest,
-  context: RouteContext
+  context: any // Use any as a temporary diagnostic step
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -140,7 +140,7 @@ export async function DELETE(
 
     await prisma.estimate.delete({
       where: {
-        id: context.params.id,
+        id: context.params.id, // Access params via context
       },
     });
 
