@@ -3,6 +3,13 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 
+type RouteParams = {
+  params: {
+    id: string;
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
 // Define the context type explicitly
 interface RouteContext {
   params: {
@@ -11,10 +18,7 @@ interface RouteContext {
 }
 
 // GET /api/estimates/[id] - Get a single estimate
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -46,10 +50,7 @@ export async function GET(
 }
 
 // PUT /api/estimates/[id] - Update an estimate
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -128,10 +129,7 @@ export async function PUT(
 }
 
 // DELETE /api/estimates/[id] - Delete an estimate
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
