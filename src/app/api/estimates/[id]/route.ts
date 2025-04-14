@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 // GET /api/estimates/[id] - Get a single estimate
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Initialize Supabase client
@@ -28,7 +28,7 @@ export async function GET(
         clients (*),
         line_items (*)
       `)
-      .eq('id', context.params.id)
+      .eq('id', params.id)
       .single();
 
     if (error) {
@@ -53,7 +53,7 @@ export async function GET(
 // PUT /api/estimates/[id] - Update an estimate
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Initialize Supabase client
@@ -92,7 +92,7 @@ export async function PUT(
     const { error: deleteError } = await supabase
       .from('line_items')
       .delete()
-      .eq('estimate_id', context.params.id);
+      .eq('estimate_id', params.id);
 
     if (deleteError) {
       throw deleteError;
@@ -114,7 +114,7 @@ export async function PUT(
         is_draft,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', context.params.id)
+      .eq('id', params.id)
       .select()
       .single();
 
@@ -127,7 +127,7 @@ export async function PUT(
       .from('line_items')
       .insert(
         line_items.map((item: any) => ({
-          estimate_id: context.params.id,
+          estimate_id: params.id,
           description: item.description,
           quantity: item.quantity,
           unit_price: item.unit_price,
@@ -147,7 +147,7 @@ export async function PUT(
         clients (*),
         line_items (*)
       `)
-      .eq('id', context.params.id)
+      .eq('id', params.id)
       .single();
 
     if (fetchError) {
@@ -167,7 +167,7 @@ export async function PUT(
 // DELETE /api/estimates/[id] - Delete an estimate
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Initialize Supabase client
@@ -186,7 +186,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('estimates')
       .delete()
-      .eq('id', context.params.id);
+      .eq('id', params.id);
 
     if (error) {
       throw error;
