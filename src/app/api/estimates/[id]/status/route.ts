@@ -29,7 +29,7 @@ export async function PATCH(
     // Update the estimate status
     const estimate = await prisma.estimate.update({
       where: {
-        id: parseInt(params.id),
+        id: params.id, // ID is already a string, no need to parse
       },
       data: {
         status: status as EstimateStatus,
