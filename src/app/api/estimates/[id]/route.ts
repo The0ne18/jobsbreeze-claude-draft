@@ -3,16 +3,13 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 
-type RouteContext = {
-  params: {
-    id: string;
-  };
-};
+// Define params type for route segment
+type EstimateParams = { params: { id: string } };
 
 // GET /api/estimates/[id] - Get a single estimate
 export async function GET(
   request: NextRequest,
-  context: RouteContext
+  { params }: EstimateParams
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -22,7 +19,7 @@ export async function GET(
 
     const estimate = await prisma.estimate.findUnique({
       where: {
-        id: context.params.id,
+        id: params.id,
       },
       include: {
         client: true,
@@ -47,7 +44,7 @@ export async function GET(
 // PUT /api/estimates/[id] - Update an estimate
 export async function PUT(
   request: NextRequest,
-  context: RouteContext
+  { params }: EstimateParams
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -80,14 +77,14 @@ export async function PUT(
       // Delete existing line items
       await prisma.lineItem.deleteMany({
         where: {
-          estimateId: context.params.id,
+          estimateId: params.id,
         },
       });
 
       // Update the estimate and create new line items
       return prisma.estimate.update({
         where: {
-          id: context.params.id,
+          id: params.id,
         },
         data: {
           clientId,
@@ -129,7 +126,7 @@ export async function PUT(
 // DELETE /api/estimates/[id] - Delete an estimate
 export async function DELETE(
   request: NextRequest,
-  context: RouteContext
+  { params }: EstimateParams
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -139,7 +136,7 @@ export async function DELETE(
 
     await prisma.estimate.delete({
       where: {
-        id: context.params.id,
+        id: params.id,
       },
     });
 
