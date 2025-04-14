@@ -1,6 +1,16 @@
-import { ApiClient, ApiError } from '@/lib/api/client';
+import { ApiClient } from '@/lib/api/client';
+import { ApiError } from '@/types/api';
 import { Estimate, LineItem } from '@/types/estimate';
 import config from '@/lib/config';
+
+function isApiError(error: unknown): error is ApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as ApiError).message === 'string'
+  );
+}
 
 class EstimateService {
   private api: ApiClient;
@@ -13,7 +23,7 @@ class EstimateService {
     try {
       return await this.api.get<Estimate[]>('/estimates');
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (isApiError(error)) {
         console.error('Failed to fetch estimates:', error.message);
         throw error;
       }
@@ -25,7 +35,7 @@ class EstimateService {
     try {
       return await this.api.get<Estimate>(`/estimates/${id}`);
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (isApiError(error)) {
         console.error(`Failed to fetch estimate ${id}:`, error.message);
         throw error;
       }
@@ -37,7 +47,7 @@ class EstimateService {
     try {
       return await this.api.post<Estimate>('/estimates', estimate);
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (isApiError(error)) {
         console.error('Failed to create estimate:', error.message);
         throw error;
       }
@@ -49,7 +59,7 @@ class EstimateService {
     try {
       return await this.api.put<Estimate>(`/estimates/${id}`, estimate);
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (isApiError(error)) {
         console.error(`Failed to update estimate ${id}:`, error.message);
         throw error;
       }
@@ -61,7 +71,7 @@ class EstimateService {
     try {
       await this.api.delete(`/estimates/${id}`);
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (isApiError(error)) {
         console.error(`Failed to delete estimate ${id}:`, error.message);
         throw error;
       }
@@ -73,7 +83,7 @@ class EstimateService {
     try {
       return await this.api.post<LineItem>(`/estimates/${estimateId}/line-items`, lineItem);
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (isApiError(error)) {
         console.error(`Failed to add line item to estimate ${estimateId}:`, error.message);
         throw error;
       }
@@ -85,7 +95,7 @@ class EstimateService {
     try {
       return await this.api.put<LineItem>(`/estimates/${estimateId}/line-items/${lineItemId}`, lineItem);
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (isApiError(error)) {
         console.error(`Failed to update line item ${lineItemId}:`, error.message);
         throw error;
       }
@@ -97,7 +107,7 @@ class EstimateService {
     try {
       await this.api.delete(`/estimates/${estimateId}/line-items/${lineItemId}`);
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (isApiError(error)) {
         console.error(`Failed to delete line item ${lineItemId}:`, error.message);
         throw error;
       }
