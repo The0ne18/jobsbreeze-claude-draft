@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { Item } from '@/types/item';
 
-interface ItemSelectProps {
+interface IItemSelectProps {
   onSelect: (item: Item) => void;
 }
 
-export default function ItemSelect({ onSelect }: ItemSelectProps) {
+export default function ItemSelect({ onSelect }: IItemSelectProps) {
   const [items, setItems] = useState<Item[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,12 +16,8 @@ export default function ItemSelect({ onSelect }: ItemSelectProps) {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        console.log('Fetching items...');
         const response = await fetch('/api/items');
-        console.log('Response status:', response.status);
-        
         const data = await response.json();
-        console.log('API response data:', data);
         
         if (!response.ok) {
           setDebugInfo(`API error: ${response.status} - ${JSON.stringify(data)}`);
@@ -29,7 +25,6 @@ export default function ItemSelect({ onSelect }: ItemSelectProps) {
         }
 
         if (Array.isArray(data)) {
-          console.log(`Received ${data.length} items:`, data);
           setItems(data);
           if (data.length === 0) {
             setDebugInfo('API returned an empty array');
@@ -87,9 +82,7 @@ export default function ItemSelect({ onSelect }: ItemSelectProps) {
         const value = e.target.value;
         if (!value) return;
         
-        console.log('Selected value:', value);
-        const selectedItem = items.find(item => item.id === parseInt(value, 10));
-        console.log('Selected item:', selectedItem);
+        const selectedItem = items.find(item => item.id === value);
         
         if (selectedItem) {
           onSelect(selectedItem);
