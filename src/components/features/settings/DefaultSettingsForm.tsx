@@ -34,14 +34,14 @@ export default function DefaultSettingsForm({
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold">Default Settings</h2>
-        <p className="text-gray-600 text-sm">Set your default values for new estimates and invoices</p>
+        <h2 className="text-xl font-semibold text-gray-900">Default Settings</h2>
+        <p className="text-gray-600 text-sm mt-1">Set your default values for new estimates and invoices</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="space-y-1.5">
-            <label htmlFor="defaultTaxRate" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="defaultTaxRate" className="block text-sm font-medium text-gray-800">
               Default Tax Rate (%)
             </label>
             <input
@@ -53,15 +53,15 @@ export default function DefaultSettingsForm({
               {...register('defaultTaxRate', { valueAsNumber: true })}
               className={`w-full h-11 sm:h-12 px-4 rounded-lg border ${
                 errors.defaultTaxRate ? 'border-red-500' : 'border-gray-300'
-              } text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+              } text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white placeholder-gray-400`}
             />
             {errors.defaultTaxRate && (
-              <p className="text-red-500 text-sm mt-1">{errors.defaultTaxRate.message}</p>
+              <p className="text-red-600 text-sm mt-1 font-medium">{errors.defaultTaxRate.message}</p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="estimateExpiry" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="estimateExpiry" className="block text-sm font-medium text-gray-800">
               Estimate Expiry (days)
             </label>
             <input
@@ -71,15 +71,15 @@ export default function DefaultSettingsForm({
               {...register('estimateExpiry', { valueAsNumber: true })}
               className={`w-full h-11 sm:h-12 px-4 rounded-lg border ${
                 errors.estimateExpiry ? 'border-red-500' : 'border-gray-300'
-              } text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+              } text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white placeholder-gray-400`}
             />
             {errors.estimateExpiry && (
-              <p className="text-red-500 text-sm mt-1">{errors.estimateExpiry.message}</p>
+              <p className="text-red-600 text-sm mt-1 font-medium">{errors.estimateExpiry.message}</p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="invoiceDue" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="invoiceDue" className="block text-sm font-medium text-gray-800">
               Invoice Due (days)
             </label>
             <input
@@ -89,14 +89,16 @@ export default function DefaultSettingsForm({
               {...register('invoiceDue', { valueAsNumber: true })}
               className={`w-full h-11 sm:h-12 px-4 rounded-lg border ${
                 errors.invoiceDue ? 'border-red-500' : 'border-gray-300'
-              } text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+              } text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white placeholder-gray-400`}
             />
-            {errors.invoiceDue && <p className="text-red-500 text-sm mt-1">{errors.invoiceDue.message}</p>}
+            {errors.invoiceDue && (
+              <p className="text-red-600 text-sm mt-1 font-medium">{errors.invoiceDue.message}</p>
+            )}
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="defaultTerms" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="defaultTerms" className="block text-sm font-medium text-gray-800">
             Default Terms
           </label>
           <textarea
@@ -104,15 +106,17 @@ export default function DefaultSettingsForm({
             {...register('defaultTerms')}
             className={`w-full px-4 py-2 rounded-lg border ${
               errors.defaultTerms ? 'border-red-500' : 'border-gray-300'
-            } text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+            } text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white placeholder-gray-400`}
             rows={3}
             placeholder="Payment is due within 14 days of invoice date. Please make checks payable to Your Business Name or pay online via the payment link provided on the invoice."
           />
-          {errors.defaultTerms && <p className="text-red-500 text-sm mt-1">{errors.defaultTerms.message}</p>}
+          {errors.defaultTerms && (
+            <p className="text-red-600 text-sm mt-1 font-medium">{errors.defaultTerms.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="defaultNotes" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="defaultNotes" className="block text-sm font-medium text-gray-800">
             Default Notes
           </label>
           <textarea
@@ -120,11 +124,13 @@ export default function DefaultSettingsForm({
             {...register('defaultNotes')}
             className={`w-full px-4 py-2 rounded-lg border ${
               errors.defaultNotes ? 'border-red-500' : 'border-gray-300'
-            } text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+            } text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white placeholder-gray-400`}
             rows={3}
             placeholder="Thank you for your business!"
           />
-          {errors.defaultNotes && <p className="text-red-500 text-sm mt-1">{errors.defaultNotes.message}</p>}
+          {errors.defaultNotes && (
+            <p className="text-red-600 text-sm mt-1 font-medium">{errors.defaultNotes.message}</p>
+          )}
         </div>
 
         <div className="pt-4">

@@ -1,63 +1,67 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { BusinessInfo } from '@/types/settings';
+import { BusinessInfo, businessInfoSchema } from '@/types/settings';
 import { snakeToCamel, camelToSnake } from '@/utils/formatters';
+import { z } from 'zod';
 
 // Default values to return if database operations fail
-const DEFAULT_BUSINESS_INFO = {
-  business_name: '',
+const DEFAULT_BUSINESS_INFO: BusinessInfo = {
+  businessName: '',
   email: '',
   phone: '',
   address: '',
   website: '',
-  tax_rate: 0,
-  invoice_due_days: 14,
+  taxRate: 0,
+  invoiceDueDays: 14
 };
 
-// Default settings that will be returned if database operations fail
-const DEFAULT_SETTINGS = {
-  defaultTaxRate: 0,
-  estimateExpiry: 30,
-  invoiceDue: 14,
-  defaultTerms: 'Payment is due within 14 days of invoice date.',
-  defaultNotes: 'Thank you for your business!'
+type ApiResponse<T = any> = {
+  data?: T;
+  error?: string;
+  details?: string;
 };
 
-export async function GET() {
+async function handleError(error: unknown, defaultData?: any): Promise<NextResponse<ApiResponse>> {
+  console.error('Error in settings API:', error);
+  const message = error instanceof Error ? error.message : String(error);
+  
+  return NextResponse.json({
+    error: 'An error occurred',
+    details: message,
+    data: defaultData
+  }, { status: defaultData ? 200 : 500 });
+}
+
+async function getUserFromSession() {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError) {
+    throw new Error(`Authentication error: ${sessionError.message}`);
+  }
+  
+  const user = sessionData.session?.user;
+  if (!user) {
+    throw new Error('No authenticated user found');
+  }
+  
+  return user;
+}
+
+type DbBusinessInfo = {
+  user_id: string;
+  business_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  website: string;
+  tax_rate: number;
+  invoice_due_days: number;
+};
+
+export async function GET(): Promise<NextResponse> {
   try {
-    // Get the user's session
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const user = await getUserFromSession();
     
-    if (sessionError) {
-      console.error('Session error:', sessionError);
-      return NextResponse.json({ 
-        error: 'Authentication error', 
-        details: sessionError.message,
-        businessInfo: snakeToCamel(DEFAULT_BUSINESS_INFO),
-        defaultSettings: DEFAULT_SETTINGS
-      }, { status: 200 }); // Return 200 with default data even on auth error
-    }
-
-    if (!sessionData.session) {
-      console.warn('No session found');
-      return NextResponse.json({ 
-        error: 'No session found',
-        businessInfo: snakeToCamel(DEFAULT_BUSINESS_INFO),
-        defaultSettings: DEFAULT_SETTINGS
-      }, { status: 200 }); // Return 200 with default data
-    }
-
-    const user = sessionData.session.user;
-    
-    if (!user) {
-      console.warn('No user found in session');
-      return NextResponse.json({ 
-        error: 'No user found in session',
-        businessInfo: snakeToCamel(DEFAULT_BUSINESS_INFO),
-        defaultSettings: DEFAULT_SETTINGS
-      }, { status: 200 }); // Return 200 with default data
-    }
-
     // Check if we already have business info for this user
     const { data: businessInfo, error: businessError } = await supabase
       .from('business_info')
@@ -66,20 +70,20 @@ export async function GET() {
       .single();
 
     if (businessError && businessError.code !== 'PGRST116') { // Not found error
-      console.error('Error fetching business info:', businessError);
-      return NextResponse.json({ 
-        error: 'Database error',
-        details: businessError.message,
-        businessInfo: snakeToCamel(DEFAULT_BUSINESS_INFO),
-        defaultSettings: DEFAULT_SETTINGS
-      }, { status: 200 }); // Return 200 with default data
+      throw new Error(`Database error: ${businessError.message}`);
     }
 
     // If no business info exists, create a default entry
     if (!businessInfo) {
-      const defaultEntry = {
+      const defaultEntry: DbBusinessInfo = {
         user_id: user.id,
-        ...DEFAULT_BUSINESS_INFO
+        business_name: DEFAULT_BUSINESS_INFO.businessName,
+        email: DEFAULT_BUSINESS_INFO.email,
+        phone: DEFAULT_BUSINESS_INFO.phone,
+        address: DEFAULT_BUSINESS_INFO.address,
+        website: DEFAULT_BUSINESS_INFO.website,
+        tax_rate: DEFAULT_BUSINESS_INFO.taxRate,
+        invoice_due_days: DEFAULT_BUSINESS_INFO.invoiceDueDays
       };
 
       const { data: newBusinessInfo, error: insertError } = await supabase
@@ -89,56 +93,45 @@ export async function GET() {
         .single();
 
       if (insertError) {
-        console.error('Error creating default business info:', insertError);
-        return NextResponse.json({ 
-          error: 'Failed to create default settings',
-          details: insertError.message,
-          businessInfo: snakeToCamel(DEFAULT_BUSINESS_INFO),
-          defaultSettings: DEFAULT_SETTINGS
-        }, { status: 200 }); // Return 200 with default data
+        throw new Error(`Failed to create default settings: ${insertError.message}`);
       }
 
       return NextResponse.json({
-        businessInfo: snakeToCamel(newBusinessInfo || DEFAULT_BUSINESS_INFO),
-        defaultSettings: DEFAULT_SETTINGS
+        data: {
+          businessInfo: businessInfoSchema.parse(snakeToCamel(newBusinessInfo || defaultEntry))
+        }
       });
     }
 
     return NextResponse.json({
-      businessInfo: snakeToCamel(businessInfo),
-      defaultSettings: DEFAULT_SETTINGS
+      data: {
+        businessInfo: businessInfoSchema.parse(snakeToCamel(businessInfo))
+      }
     });
   } catch (error) {
-    console.error('Unhandled error in settings GET:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : String(error),
-      businessInfo: snakeToCamel(DEFAULT_BUSINESS_INFO),
-      defaultSettings: DEFAULT_SETTINGS
-    }, { status: 200 }); // Return 200 with default data
+    return handleError(error, { businessInfo: DEFAULT_BUSINESS_INFO });
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: Request): Promise<NextResponse> {
   try {
-    // Get the user's session
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const user = await getUserFromSession();
+    const body = await request.json();
     
-    if (sessionError) {
-      console.error('Session error:', sessionError);
-      return NextResponse.json({ error: 'Authentication error', details: sessionError.message }, { status: 401 });
-    }
-
-    if (!sessionData.session || !sessionData.session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const user = sessionData.session.user;
-    const { businessInfo } = await request.json();
-
-    // Convert from camelCase to snake_case for DB
-    const businessInfoDb = camelToSnake(businessInfo) as Record<string, any>;
-    businessInfoDb.user_id = user.id;
+    // Validate request body against schema
+    const validatedData = businessInfoSchema.parse(body.businessInfo);
+    
+    // Convert to database format
+    const businessInfoDb: DbBusinessInfo = {
+      user_id: user.id,
+      business_name: validatedData.businessName,
+      email: validatedData.email,
+      phone: validatedData.phone,
+      address: validatedData.address,
+      website: validatedData.website,
+      tax_rate: validatedData.taxRate,
+      invoice_due_days: validatedData.invoiceDueDays
+    };
 
     // Update or insert business info
     const { data, error } = await supabase
@@ -148,20 +141,23 @@ export async function PUT(request: Request) {
       .single();
 
     if (error) {
-      console.error('Error updating business info:', error);
-      return NextResponse.json({ 
-        error: 'Failed to update business info', 
-        details: error.message,
-        businessInfo: businessInfo // Return the original data that was attempted to be saved
-      }, { status: 500 });
+      throw new Error(`Failed to update business info: ${error.message}`);
     }
 
-    return NextResponse.json({ businessInfo: snakeToCamel(data) });
+    return NextResponse.json({
+      data: {
+        businessInfo: businessInfoSchema.parse(snakeToCamel(data))
+      }
+    });
   } catch (error) {
-    console.error('Unhandled error in settings PUT:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error', 
-      details: error instanceof Error ? error.message : String(error) 
-    }, { status: 500 });
+    // For validation errors, return 400
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({
+        error: 'Invalid request data',
+        details: error.errors
+      }, { status: 400 });
+    }
+    
+    return handleError(error);
   }
 } 
