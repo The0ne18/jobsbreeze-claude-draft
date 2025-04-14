@@ -13,7 +13,7 @@ interface RouteContext {
 // GET /api/estimates/[id] - Get a single estimate
 export async function GET(
   request: NextRequest,
-  context: RouteContext // Use the explicit context type
+  context: { params: { id: string } } // Use literal inline type for context
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -48,7 +48,7 @@ export async function GET(
 // PUT /api/estimates/[id] - Update an estimate
 export async function PUT(
   request: NextRequest,
-  context: RouteContext // Use the explicit context type
+  context: { params: { id: string } } // Use literal inline type for context
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -130,7 +130,7 @@ export async function PUT(
 // DELETE /api/estimates/[id] - Delete an estimate
 export async function DELETE(
   request: NextRequest,
-  context: RouteContext // Use the explicit context type
+  context: { params: { id: string } } // Use literal inline type for context
 ) {
   try {
     const session = await getServerSession(authOptions);

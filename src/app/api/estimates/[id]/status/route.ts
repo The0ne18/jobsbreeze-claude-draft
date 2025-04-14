@@ -4,17 +4,10 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { EstimateStatus } from '@/types/estimates';
 
-// Define the context type explicitly
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
 // PATCH /api/estimates/[id]/status - Update estimate status
 export async function PATCH(
   request: NextRequest,
-  context: RouteContext // Use the explicit context type
+  context: { params: { id: string } } // Use literal inline type for context
 ) {
   try {
     const session = await getServerSession(authOptions);
