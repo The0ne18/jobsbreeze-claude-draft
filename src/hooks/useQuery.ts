@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { useApiStore } from '@/stores/api';
-import { ApiError } from '@/lib/api/client';
+import { ApiError } from '@/types/api';
 
 interface QueryOptions<T> {
   key: string;

@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useApiStore } from '@/stores/api';
-import { ApiError } from '@/lib/api/client';
+import { ApiError } from '@/types/api';
 
 interface MutationOptions<TData, TVariables> {
   mutationFn: (variables: TVariables) => Promise<TData>;

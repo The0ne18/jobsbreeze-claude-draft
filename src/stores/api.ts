@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ApiError } from '@/lib/api/client';
+import { ApiError } from '@/types/api';
 
 interface CacheItem<T> {
   data: T;
